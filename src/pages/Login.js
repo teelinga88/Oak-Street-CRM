@@ -61,7 +61,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="you@oakstreetlogistics.com"
+              placeholder="you@oakstreet-logistics.com"
               required
               style={{
                 width: '100%', padding: '9px 12px', fontSize: 13,

@@ -11,10 +11,10 @@ export function useAuth() {
 
 // Team roster — maps email to rep info
 export const TEAM_ROSTER = {
-  'alex@oakstreetlogistics.com':   { name: 'Alex Teeling',    initials: 'AT', isManager: true,  color: ['#E6F1FB','#0C447C'] },
-  'bobby@oakstreetlogistics.com':  { name: "Bobby O'Brien",   initials: 'BO', isManager: true,  color: ['#E1F5EE','#085041'] },
-  'bryan@oakstreetlogistics.com':  { name: 'Bryan Clifford',  initials: 'BC', isManager: false, color: ['#EEEDFE','#3C3489'] },
-  'charles@oakstreetlogistics.com':{ name: 'Charles Tolson',  initials: 'CT', isManager: false, color: ['#FAEEDA','#633806'] },
+  'alex@oakstreet-logistics.com':   { name: 'Alex Teeling',    initials: 'AT', isManager: true,  color: ['#E6F1FB','#0C447C'] },
+  'bobby@oakstreet-logistics.com':  { name: "Bobby O'Brien",   initials: 'BO', isManager: true,  color: ['#E1F5EE','#085041'] },
+  'bryan@oakstreet-logistics.com':  { name: 'Bryan Clifford',  initials: 'BC', isManager: false, color: ['#EEEDFE','#3C3489'] },
+  'charles@oakstreet-logistics.com':{ name: 'Charles Tolson',  initials: 'CT', isManager: false, color: ['#FAEEDA','#633806'] },
 };
 
 export function AuthProvider({ children }) {
