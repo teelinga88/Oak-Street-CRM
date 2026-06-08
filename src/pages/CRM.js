@@ -60,7 +60,7 @@ function FGrid({ children }) {
 
 // ── Main CRM ───────────────────────────────────────────────────────────────
 export default function CRM() {
-  const { currentUser, repProfile, logout } = useAuth();
+  const { repProfile, logout } = useAuth();
   const isManager = repProfile?.isManager || false;
   const repName = repProfile?.name || '';
 
@@ -71,11 +71,11 @@ export default function CRM() {
 
   const [view, setView] = useState('accounts');
   const [selId, setSelId] = useState(null);
-  const [modal, setModal] = useState(null); // { type, id }
+  const [modal, setModal] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [srcFilter, setSrcFilter] = useState('');
-  const [mgrSel, setMgrSel] = useState(null); // { type: 'rep'|'stage', value }
+  const [mgrSel, setMgrSel] = useState(null);
   const [toast, setToast] = useState('');
 
   // Toast
@@ -94,21 +94,21 @@ export default function CRM() {
 
   const selectedAccount = useMemo(() => accounts.find(a => a.id === selId), [accounts, selId]);
   const selectedDeal = useMemo(() => deals.find(d => d.id === selId), [deals, selId]);
-  const selectedFollowup = useMemo(() => followups.find(f => f.id === selId), [followups, selId]);
 
   // ── Account form state ──
   const [af, setAf] = useState({});
   function openAccountModal(id=null) {
     const a = id ? accounts.find(x=>x.id===id) : null;
-    setAf(a ? {...a} : { name:'',industry:'',location:'',status:'Active',contact:'',email:'',phone:'',shipmentType:'',commodity:'',notes:'' });
+    setAf(a ? {...a} : { name:'',industry:'',location:'',status:'Active',contact:'',email:'',phone:'',shipmentType:'',commodity:'',notes:'', rep: repName });
     setModal({ type:'account', id });
   }
   async function saveAccount() {
     if (!af.name?.trim()) { showToast('Company name required'); return; }
+    const assignedRep = af.rep || repName;
     if (modal.id) {
-      await updateAccount(modal.id, af);
+      await updateAccount(modal.id, { ...af, rep: assignedRep });
     } else {
-      await addAccount({ ...af, rep: repName });
+      await addAccount({ ...af, rep: assignedRep });
     }
     setModal(null); showToast('Account saved!');
   }
@@ -229,7 +229,6 @@ export default function CRM() {
     setModal(null); showToast('Lead added!');
   }
 
-  const teamEmails = Object.keys(TEAM_ROSTER);
 
   // ── SIDEBAR ────────────────────────────────────────────────────────────────
   const navItems = [
@@ -775,6 +774,7 @@ export default function CRM() {
           <FRow label="Shipment Type"><input style={S.input} value={af.shipmentType||''} onChange={e=>setAf({...af,shipmentType:e.target.value})} placeholder="FTL Dry Van, LTL, Reefer"/></FRow>
           <FRow label="Commodity"><input style={S.input} value={af.commodity||''} onChange={e=>setAf({...af,commodity:e.target.value})} placeholder="General freight"/></FRow>
           <FRow label="Notes"><textarea style={{ ...S.input, minHeight:60, resize:'vertical' }} value={af.notes||''} onChange={e=>setAf({...af,notes:e.target.value})} placeholder="Notes…"/></FRow>
+          {isManager && <FRow label="Assign to rep"><select style={S.input} value={af.rep||repName} onChange={e=>setAf({...af,rep:e.target.value})}>{Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name}</option>)}</select></FRow>}
         </Modal>
       )}
 
