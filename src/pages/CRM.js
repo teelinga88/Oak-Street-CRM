@@ -82,9 +82,9 @@ export default function CRM() {
   function showToast(msg) { setToast(msg); setTimeout(()=>setToast(''), 3000); }
 
   // Filtered accounts (only mine unless manager)
-  const myAccounts = useMemo(() => accounts.filter(a => isManager || a.rep === repName), [accounts, repName, isManager]);
-  const myDeals = useMemo(() => deals.filter(d => isManager || d.rep === repName), [deals, repName, isManager]);
-  const myFollowups = useMemo(() => followups.filter(f => isManager || f.rep === repName), [followups, repName, isManager]);
+  const myAccounts = useMemo(() => accounts.filter(a => a.rep === repName), [accounts, repName, isManager]);
+  const myDeals = useMemo(() => deals.filter(d => d.rep === repName), [deals, repName, isManager]);
+  const myFollowups = useMemo(() => followups.filter(f => f.rep === repName), [followups, repName, isManager]);
 
   const filteredAccounts = useMemo(() => myAccounts.filter(a => {
     const q = search.toLowerCase();
