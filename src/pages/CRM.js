@@ -10,6 +10,8 @@ const today = () => new Date().toISOString().split('T')[0];
 const nowLabel = () => new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 const fmtDate = d => { if(!d) return '—'; return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
 const daysAgo = iso => { if(!iso) return '—'; const d=Math.floor((Date.now()-new Date(iso))/(864e5)); if(d===0)return'Today'; if(d===1)return'Yesterday'; if(d<7)return d+' days ago'; return Math.floor(d/7)+' wks ago'; };
+const daysSince = iso => { if(!iso) return null; return Math.floor((Date.now()-new Date(iso))/(864e5)); };
+const isAtRisk = a => { const d = daysSince(a.lastShipmentDate); return d === null ? false : d >= 60; };
 
 const STAGES = ['New Lead','Contact Made','Quoting','Closed Won','Closed Lost'];
 const SCOLS = {'New Lead':['#F1EFE8','#5F5E5A'],'Contact Made':['#FAEEDA','#633806'],'Quoting':['#E6F1FB','#0C447C'],'Closed Won':['#EAF3DE','#3B6D11'],'Closed Lost':['#FCEBEB','#A32D2D']};
@@ -86,14 +88,44 @@ export default function CRM() {
   const myDeals = useMemo(() => deals.filter(d => d.rep === repName), [deals, repName, isManager]);
   const myFollowups = useMemo(() => followups.filter(f => f.rep === repName), [followups, repName, isManager]);
 
-  const filteredAccounts = useMemo(() => myAccounts.filter(a => {
+  // Sort accounts: by shipmentsThisMonth desc, then zeros alphabetically
+  const sortedAccounts = useMemo(() => {
+    const withShipments = myAccounts.filter(a => (a.shipmentsThisMonth || 0) > 0)
+      .sort((a, b) => (b.shipmentsThisMonth || 0) - (a.shipmentsThisMonth || 0));
+    const withoutShipments = myAccounts.filter(a => !(a.shipmentsThisMonth > 0))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return [...withShipments, ...withoutShipments];
+  }, [myAccounts]);
+
+  const filteredAccounts = useMemo(() => sortedAccounts.filter(a => {
     const q = search.toLowerCase();
     return (!q || (a.name+a.contact+a.email+a.location+a.shipmentType).toLowerCase().includes(q))
       && (!statusFilter || a.status === statusFilter);
-  }), [myAccounts, search, statusFilter]);
+  }), [sortedAccounts, search, statusFilter]);
 
   const selectedAccount = useMemo(() => accounts.find(a => a.id === selId), [accounts, selId]);
   const selectedDeal = useMemo(() => deals.find(d => d.id === selId), [deals, selId]);
+
+  // Shipments this month per rep (for manager view)
+  const shipmentsPerRep = useMemo(() => {
+    const map = {};
+    Object.values(TEAM_ROSTER).forEach(r => {
+      map[r.name] = accounts
+        .filter(a => a.rep === r.name)
+        .reduce((sum, a) => sum + (a.shipmentsThisMonth || 0), 0);
+    });
+    return map;
+  }, [accounts]);
+
+  // My total shipments this month
+  const myShipmentsThisMonth = useMemo(() =>
+    myAccounts.reduce((sum, a) => sum + (a.shipmentsThisMonth || 0), 0),
+  [myAccounts]);
+
+  // At-risk accounts (60+ days no shipment)
+  const atRiskCount = useMemo(() =>
+    myAccounts.filter(a => isAtRisk(a)).length,
+  [myAccounts]);
 
   // ── Account form state ──
   const [af, setAf] = useState({});
@@ -303,13 +335,14 @@ export default function CRM() {
                 {[
                   { label:'My accounts', value: myAccounts.length },
                   { label:'Active', value: myAccounts.filter(a=>a.status==='Active').length, sub: myAccounts.length ? Math.round(myAccounts.filter(a=>a.status==='Active').length/myAccounts.length*100)+'%' : '0%' },
-                  { label:'At-risk', value: myAccounts.filter(a=>a.status==='At risk').length, warn: myAccounts.filter(a=>a.status==='At risk').length > 0 },
-                  { label:'Have contact info', value: myAccounts.filter(a=>a.contact||a.phone||a.email).length, sub: myAccounts.length ? Math.round(myAccounts.filter(a=>a.contact||a.phone||a.email).length/myAccounts.length*100)+'% filled' : '0%' },
+                  { label:'At-risk', value: atRiskCount, warn: atRiskCount > 0 },
+                  { label:'Shipments this month', value: myShipmentsThisMonth, highlight: true },
                 ].map((m,i) => (
-                  <div key={i} style={S.card}>
-                    <div style={{ fontSize:11, color:'#888', marginBottom:4 }}>{m.label}</div>
-                    <div style={{ fontSize:22, fontWeight:600, color: m.warn ? '#A32D2D' : '#1a1a1a' }}>{m.value}</div>
+                  <div key={i} style={{ ...S.card, ...(m.highlight ? { background:'#E6F1FB', border:'0.5px solid #A8C8F0' } : {}) }}>
+                    <div style={{ fontSize:11, color: m.highlight ? '#0C447C' : '#888', marginBottom:4 }}>{m.label}</div>
+                    <div style={{ fontSize:22, fontWeight:600, color: m.warn ? '#A32D2D' : m.highlight ? '#0C447C' : '#1a1a1a' }}>{m.value}</div>
                     {m.sub && <div style={{ fontSize:11, color:'#888', marginTop:3 }}>{m.sub}</div>}
+                    {m.highlight && <div style={{ fontSize:11, color:'#0C447C', marginTop:3, opacity:.7 }}>resets monthly</div>}
                   </div>
                 ))}
               </div>
@@ -331,7 +364,7 @@ export default function CRM() {
                       <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'38%', borderBottom:'0.5px solid #E5E4DF' }}>Account</th>
                       <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'14%', borderBottom:'0.5px solid #E5E4DF' }}>Status</th>
                       <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'28%', borderBottom:'0.5px solid #E5E4DF' }}>Email</th>
-                      <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'20%', borderBottom:'0.5px solid #E5E4DF' }}>Last contact</th>
+                      <th style={{ padding:'8px 12px', textAlign:'center', fontWeight:500, fontSize:11, color:'#888', width:'20%', borderBottom:'0.5px solid #E5E4DF' }}>Shipments this month</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -341,6 +374,8 @@ export default function CRM() {
                       const [bg,fg] = acctColor(a.name);
                       const pending = myFollowups.filter(f=>!f.done&&f.accountId===a.id);
                       const overdue = pending.filter(f=>f.dueDate<today());
+                      const shipCount = a.shipmentsThisMonth || 0;
+                      const atRisk = isAtRisk(a);
                       return (
                         <tr key={a.id} onClick={()=>setSelId(a.id)} style={{ cursor:'pointer', background: a.id===selId ? '#F7F6F3' : '#fff', borderBottom:'0.5px solid #E5E4DF' }}>
                           <td style={{ padding:'10px 12px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
@@ -352,10 +387,20 @@ export default function CRM() {
                               </div>
                             </div>
                           </td>
-                          <td style={{ padding:'10px 12px' }}><span style={{ ...badgeStyle(a.status), padding:'2px 8px', borderRadius:20, fontSize:11, fontWeight:500 }}>{a.status}</span></td>
+                          <td style={{ padding:'10px 12px' }}>
+                            <span style={{ ...badgeStyle(atRisk ? 'At risk' : a.status), padding:'2px 8px', borderRadius:20, fontSize:11, fontWeight:500 }}>
+                              {atRisk ? 'At risk' : a.status}
+                            </span>
+                          </td>
                           <td style={{ padding:'10px 12px', fontSize:11, color: a.email?'#0C447C':'#aaa', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.email||'—'}</td>
-                          <td style={{ padding:'10px 12px', fontSize:11, color: overdue.length?'#A32D2D':'#888' }}>
-                            {overdue.length ? `⚠ ${overdue.length} overdue` : a.lastContact ? daysAgo(a.lastContact) : 'No contact yet'}
+                          <td style={{ padding:'10px 12px', textAlign:'center' }}>
+                            {atRisk ? (
+                              <span style={{ fontSize:11, color:'#A32D2D', fontWeight:500 }}>⚠ {daysSince(a.lastShipmentDate)}d ago</span>
+                            ) : shipCount > 0 ? (
+                              <span style={{ fontSize:13, fontWeight:600, color:'#0C447C' }}>{shipCount}</span>
+                            ) : (
+                              <span style={{ fontSize:11, color:'#aaa' }}>—</span>
+                            )}
                           </td>
                         </tr>
                       );
@@ -556,6 +601,27 @@ export default function CRM() {
               <h2 style={{ fontSize:15, fontWeight:600 }}>Manager Dashboard</h2>
             </div>
             <div style={{ flex:1, overflowY:'auto', padding:16 }}>
+
+              {/* Shipments this month per rep */}
+              <div style={{ marginBottom:20 }}>
+                <div style={{ fontWeight:500, marginBottom:10 }}>Shipments this month</div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10 }}>
+                  {Object.entries(TEAM_ROSTER).map(([email, rep]) => {
+                    const count = shipmentsPerRep[rep.name] || 0;
+                    return (
+                      <div key={email} style={{ ...S.card, background:'#E6F1FB', border:'0.5px solid #A8C8F0' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
+                          <div style={{ width:20, height:20, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:600, background:rep.color[0], color:rep.color[1], flexShrink:0 }}>{rep.initials}</div>
+                          <div style={{ fontSize:11, color:'#0C447C', fontWeight:500 }}>{rep.name.split(' ')[0]}</div>
+                        </div>
+                        <div style={{ fontSize:22, fontWeight:600, color:'#0C447C' }}>{count}</div>
+                        <div style={{ fontSize:10, color:'#0C447C', opacity:.7, marginTop:2 }}>shipments</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Rep performance */}
               <div style={{ marginBottom:20 }}>
                 <div style={{ fontWeight:500, marginBottom:10 }}>Rep performance</div>
@@ -626,14 +692,40 @@ export default function CRM() {
             const a = selectedAccount;
             const [bg,fg] = acctColor(a.name);
             const nf = myFollowups.filter(f=>!f.done&&f.accountId===a.id).sort((x,y)=>x.dueDate.localeCompare(y.dueDate))[0];
+            const atRisk = isAtRisk(a);
+            const shipCount = a.shipmentsThisMonth || 0;
+            const dSince = daysSince(a.lastShipmentDate);
             return (
               <>
                 <div style={{ textAlign:'center', marginBottom:14 }}>
                   <div style={{ width:40, height:40, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:600, background:bg, color:fg, margin:'0 auto 8px' }}>{initials(a.name)}</div>
                   <div style={{ fontSize:15, fontWeight:600 }}>{a.name}</div>
                   <div style={{ fontSize:12, color:'#888' }}>{a.industry||''}{a.location?' · '+a.location:''}</div>
-                  <span style={{ ...badgeStyle(a.status), padding:'2px 8px', borderRadius:20, fontSize:11, fontWeight:500, marginTop:4, display:'inline-block' }}>{a.status}</span>
+                  <span style={{ ...badgeStyle(atRisk ? 'At risk' : a.status), padding:'2px 8px', borderRadius:20, fontSize:11, fontWeight:500, marginTop:4, display:'inline-block' }}>{atRisk ? 'At risk' : a.status}</span>
                 </div>
+
+                {/* Shipment summary */}
+                <div style={{ background: atRisk ? '#FCEBEB' : '#E6F1FB', border: `0.5px solid ${atRisk ? '#F09595' : '#A8C8F0'}`, borderRadius:8, padding:'10px 12px', marginBottom:14 }}>
+                  <div style={{ fontSize:10, fontWeight:500, color: atRisk ? '#A32D2D' : '#0C447C', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:6 }}>
+                    {atRisk ? '⚠ At Risk' : '📦 Shipments'}
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <div>
+                      <div style={{ fontSize:20, fontWeight:700, color: atRisk ? '#A32D2D' : '#0C447C' }}>{shipCount}</div>
+                      <div style={{ fontSize:10, color: atRisk ? '#A32D2D' : '#0C447C', opacity:.8 }}>this month</div>
+                    </div>
+                    {a.lastShipmentDate && (
+                      <div style={{ textAlign:'right' }}>
+                        <div style={{ fontSize:11, color: atRisk ? '#A32D2D' : '#888', fontWeight: atRisk ? 600 : 400 }}>
+                          {atRisk ? `${dSince} days ago` : daysAgo(a.lastShipmentDate)}
+                        </div>
+                        <div style={{ fontSize:10, color:'#aaa' }}>last shipment</div>
+                      </div>
+                    )}
+                  </div>
+                  {atRisk && <div style={{ fontSize:11, color:'#A32D2D', marginTop:6, fontWeight:500 }}>No shipment in {dSince} days — follow up!</div>}
+                </div>
+
                 {nf && <div style={{ textAlign:'center', marginBottom:14 }}><span style={{ background:'#FAEEDA', color:'#633806', padding:'2px 10px', borderRadius:20, fontSize:11, fontWeight:500 }}>🕐 Follow-up due {fmtDate(nf.dueDate)}</span></div>}
                 <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
                   <button style={{ ...S.btnFu, justifyContent:'center', width:'100%' }} onClick={()=>openFollowupModal(null, a.id)}>🔔 Set follow-up reminder</button>
@@ -708,10 +800,13 @@ export default function CRM() {
                     <div style={{ width:36, height:36, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:600, background:rep.color[0], color:rep.color[1] }}>{rep.initials}</div>
                     <div><div style={{ fontSize:14, fontWeight:600 }}>{rep.name}</div><div style={{ fontSize:11, color:'#888' }}>{rep.isManager?'Rep & Manager':'Sales Rep'}</div></div>
                   </div>
+                  <DetailSection title="Shipments this month">
+                    <DetailRow k="Total" v={shipmentsPerRep[rep.name] || 0}/>
+                  </DetailSection>
                   <DetailSection title="Accounts">
                     <DetailRow k="Total" v={repAccts.length}/>
                     <DetailRow k="Active" v={repAccts.filter(a=>a.status==='Active').length}/>
-                    <DetailRow k="At risk" v={repAccts.filter(a=>a.status==='At risk').length}/>
+                    <DetailRow k="At risk" v={repAccts.filter(a=>isAtRisk(a)).length}/>
                   </DetailSection>
                   <DetailSection title="Pipeline">
                     {STAGES.filter(s=>s!=='Closed Lost').map(s=><DetailRow key={s} k={s} v={repDeals.filter(d=>d.stage===s).length}/>)}
