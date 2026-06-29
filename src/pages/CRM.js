@@ -361,9 +361,9 @@ export default function CRM() {
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:12, tableLayout:'fixed' }}>
                   <thead>
                     <tr style={{ background:'#F7F6F3' }}>
-                      <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'38%', borderBottom:'0.5px solid #E5E4DF' }}>Account</th>
-                      <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'14%', borderBottom:'0.5px solid #E5E4DF' }}>Status</th>
-                      <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'28%', borderBottom:'0.5px solid #E5E4DF' }}>Email</th>
+                      <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'55%', borderBottom:'0.5px solid #E5E4DF' }}>Account</th>
+                      <th style={{ padding:'8px 12px', textAlign:'left', fontWeight:500, fontSize:11, color:'#888', width:'20%', borderBottom:'0.5px solid #E5E4DF' }}>Status</th>
+                      
                       <th style={{ padding:'8px 12px', textAlign:'center', fontWeight:500, fontSize:11, color:'#888', width:'20%', borderBottom:'0.5px solid #E5E4DF' }}>Shipments this month</th>
                     </tr>
                   </thead>
@@ -392,7 +392,7 @@ export default function CRM() {
                               {atRisk ? 'At risk' : a.status}
                             </span>
                           </td>
-                          <td style={{ padding:'10px 12px', fontSize:11, color: a.email?'#0C447C':'#aaa', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{a.email||'—'}</td>
+                          
                           <td style={{ padding:'10px 12px', textAlign:'center' }}>
                             {atRisk ? (
                               <span style={{ fontSize:11, color:'#A32D2D', fontWeight:500 }}>⚠ {daysSince(a.lastShipmentDate)}d ago</span>
@@ -677,7 +677,7 @@ export default function CRM() {
       </div>
 
       {/* ── DETAIL PANEL ── */}
-      <div style={{ width:250, borderLeft:'0.5px solid #E5E4DF', display:'flex', flexDirection:'column', flexShrink:0, overflow:'hidden' }}>
+      <div style={{ width:320, borderLeft:'0.5px solid #E5E4DF', display:'flex', flexDirection:'column', flexShrink:0, overflow:'hidden' }}>
         <div style={{ padding:'12px 14px', borderBottom:'0.5px solid #E5E4DF', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
           <h3 style={{ fontSize:13, fontWeight:600 }}>
             {view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':view==='manager'?'Detail':'Detail'}
