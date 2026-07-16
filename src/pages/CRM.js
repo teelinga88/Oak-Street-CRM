@@ -101,7 +101,7 @@ export default function CRM(){
       const q=search.toLowerCase();
       return(!q||(a.name+a.contact+a.email+a.location+a.shipmentType).toLowerCase().includes(q))&&(!statusFilter||a.status===statusFilter)&&(!atRiskOnly||isAtRisk(a));
     });
-    if(daysSortDir){
+    if(daysSortDir&&atRiskOnly){
       list=[...list].sort((a,b)=>{
         const da=daysSince(a.lastShipmentDate),db=daysSince(b.lastShipmentDate);
         if(da===null&&db===null)return 0;
@@ -275,7 +275,7 @@ export default function CRM(){
                   {label:'My accounts',value:myAccounts.length},
                   {label:'Active',value:myAccounts.filter(a=>a.status==='Active').length,sub:myAccounts.length?Math.round(myAccounts.filter(a=>a.status==='Active').length/myAccounts.length*100)+'%':'0%'},
                   {label:'At-risk',value:atRiskCount,warn:atRiskCount>0,clickable:true,active:atRiskOnly,onClick:()=>setAtRiskOnly(v=>!v),hint:' (click to filter)',activeHint:' — click to clear'},
-                  {label:'Shipments this month',value:myShipmentsThisMonth,highlight:true,clickable:true,active:!!daysSortDir,onClick:()=>setDaysSortDir(d=>d==='asc'?'desc':'asc'),hint:' (click to sort by days)',activeHint:daysSortDir==='asc'?' ↑ least days first':' ↓ most days first'},
+                  {label:'Shipments this month',value:myShipmentsThisMonth,highlight:true,clickable:true,active:!!daysSortDir&&atRiskOnly,onClick:()=>setDaysSortDir(d=>d==='asc'?'desc':'asc'),hint:atRiskOnly?' (click to sort by days)':' (filter At-risk first to sort by days)',activeHint:daysSortDir==='asc'?' ↑ least days first':' ↓ most days first'},
                 ].map((m,i)=>(
                   <div key={i} onClick={m.onClick} style={{...S.card,...(m.highlight?{background:'#E6F1FB',border:'0.5px solid #A8C8F0'}:{}),...(m.clickable?{cursor:'pointer'}:{}),...(m.active&&m.label==='At-risk'?{background:'#FCEBEB',border:'0.5px solid #F09595'}:{}),...(m.active&&m.label!=='At-risk'?{border:'0.5px solid #0C447C'}:{})}}>
                     <div style={{fontSize:11,color:m.highlight?'#0C447C':'#888',marginBottom:4}}>{m.label}{m.active?m.activeHint:m.clickable?m.hint:''}</div>
