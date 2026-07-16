@@ -82,6 +82,7 @@ export default function CRM(){
   const[search,setSearch]=useState('');
   const[statusFilter,setStatusFilter]=useState('');
   const[atRiskOnly,setAtRiskOnly]=useState(false);
+  const[daysSortDir,setDaysSortDir]=useState(null);
   const[srcFilter,setSrcFilter]=useState('');
   const[mgrSel,setMgrSel]=useState(null);
   const[toast,setToast]=useState('');
@@ -95,10 +96,22 @@ export default function CRM(){
     const wo=myAccounts.filter(a=>!(a.shipmentsThisMonth>0)).sort((a,b)=>a.name.localeCompare(b.name));
     return[...w,...wo];
   },[myAccounts]);
-  const filteredAccounts=useMemo(()=>sortedAccounts.filter(a=>{
-    const q=search.toLowerCase();
-    return(!q||(a.name+a.contact+a.email+a.location+a.shipmentType).toLowerCase().includes(q))&&(!statusFilter||a.status===statusFilter)&&(!atRiskOnly||isAtRisk(a));
-  }),[sortedAccounts,search,statusFilter,atRiskOnly]);
+  const filteredAccounts=useMemo(()=>{
+    let list=sortedAccounts.filter(a=>{
+      const q=search.toLowerCase();
+      return(!q||(a.name+a.contact+a.email+a.location+a.shipmentType).toLowerCase().includes(q))&&(!statusFilter||a.status===statusFilter)&&(!atRiskOnly||isAtRisk(a));
+    });
+    if(daysSortDir){
+      list=[...list].sort((a,b)=>{
+        const da=daysSince(a.lastShipmentDate),db=daysSince(b.lastShipmentDate);
+        if(da===null&&db===null)return 0;
+        if(da===null)return 1;
+        if(db===null)return -1;
+        return daysSortDir==='asc'?da-db:db-da;
+      });
+    }
+    return list;
+  },[sortedAccounts,search,statusFilter,atRiskOnly,daysSortDir]);
   const selectedAccount=useMemo(()=>accounts.find(a=>a.id===selId),[accounts,selId]);
   const selectedDeal=useMemo(()=>deals.find(d=>d.id===selId),[deals,selId]);
   const shipmentsPerRep=useMemo(()=>{
@@ -261,14 +274,14 @@ export default function CRM(){
                 {[
                   {label:'My accounts',value:myAccounts.length},
                   {label:'Active',value:myAccounts.filter(a=>a.status==='Active').length,sub:myAccounts.length?Math.round(myAccounts.filter(a=>a.status==='Active').length/myAccounts.length*100)+'%':'0%'},
-                  {label:'At-risk',value:atRiskCount,warn:atRiskCount>0,clickable:true,active:atRiskOnly,onClick:()=>setAtRiskOnly(v=>!v)},
-                  {label:'Shipments this month',value:myShipmentsThisMonth,highlight:true},
+                  {label:'At-risk',value:atRiskCount,warn:atRiskCount>0,clickable:true,active:atRiskOnly,onClick:()=>setAtRiskOnly(v=>!v),hint:' (click to filter)',activeHint:' — click to clear'},
+                  {label:'Shipments this month',value:myShipmentsThisMonth,highlight:true,clickable:true,active:!!daysSortDir,onClick:()=>setDaysSortDir(d=>d==='asc'?'desc':'asc'),hint:' (click to sort by days)',activeHint:daysSortDir==='asc'?' ↑ least days first':' ↓ most days first'},
                 ].map((m,i)=>(
-                  <div key={i} onClick={m.onClick} style={{...S.card,...(m.highlight?{background:'#E6F1FB',border:'0.5px solid #A8C8F0'}:{}),...(m.clickable?{cursor:'pointer'}:{}),...(m.active?{background:'#FCEBEB',border:'0.5px solid #F09595'}:{})}}>
-                    <div style={{fontSize:11,color:m.highlight?'#0C447C':'#888',marginBottom:4}}>{m.label}{m.active?' — click to clear':m.clickable?' (click to filter)':''}</div>
+                  <div key={i} onClick={m.onClick} style={{...S.card,...(m.highlight?{background:'#E6F1FB',border:'0.5px solid #A8C8F0'}:{}),...(m.clickable?{cursor:'pointer'}:{}),...(m.active&&m.label==='At-risk'?{background:'#FCEBEB',border:'0.5px solid #F09595'}:{}),...(m.active&&m.label!=='At-risk'?{border:'0.5px solid #0C447C'}:{})}}>
+                    <div style={{fontSize:11,color:m.highlight?'#0C447C':'#888',marginBottom:4}}>{m.label}{m.active?m.activeHint:m.clickable?m.hint:''}</div>
                     <div style={{fontSize:22,fontWeight:600,color:m.warn?'#A32D2D':m.highlight?'#0C447C':'#1a1a1a'}}>{m.value}</div>
                     {m.sub&&<div style={{fontSize:11,color:'#888',marginTop:3}}>{m.sub}</div>}
-                    {m.highlight&&<div style={{fontSize:11,color:'#0C447C',marginTop:3,opacity:.7}}>resets monthly</div>}
+                    {m.highlight&&!m.active&&<div style={{fontSize:11,color:'#0C447C',marginTop:3,opacity:.7}}>resets monthly</div>}
                   </div>
                 ))}
               </div>
