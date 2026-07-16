@@ -81,6 +81,7 @@ export default function CRM(){
   const[modal,setModal]=useState(null);
   const[search,setSearch]=useState('');
   const[statusFilter,setStatusFilter]=useState('');
+  const[atRiskOnly,setAtRiskOnly]=useState(false);
   const[srcFilter,setSrcFilter]=useState('');
   const[mgrSel,setMgrSel]=useState(null);
   const[toast,setToast]=useState('');
@@ -96,8 +97,8 @@ export default function CRM(){
   },[myAccounts]);
   const filteredAccounts=useMemo(()=>sortedAccounts.filter(a=>{
     const q=search.toLowerCase();
-    return(!q||(a.name+a.contact+a.email+a.location+a.shipmentType).toLowerCase().includes(q))&&(!statusFilter||a.status===statusFilter);
-  }),[sortedAccounts,search,statusFilter]);
+    return(!q||(a.name+a.contact+a.email+a.location+a.shipmentType).toLowerCase().includes(q))&&(!statusFilter||a.status===statusFilter)&&(!atRiskOnly||isAtRisk(a));
+  }),[sortedAccounts,search,statusFilter,atRiskOnly]);
   const selectedAccount=useMemo(()=>accounts.find(a=>a.id===selId),[accounts,selId]);
   const selectedDeal=useMemo(()=>deals.find(d=>d.id===selId),[deals,selId]);
   const shipmentsPerRep=useMemo(()=>{
@@ -260,11 +261,11 @@ export default function CRM(){
                 {[
                   {label:'My accounts',value:myAccounts.length},
                   {label:'Active',value:myAccounts.filter(a=>a.status==='Active').length,sub:myAccounts.length?Math.round(myAccounts.filter(a=>a.status==='Active').length/myAccounts.length*100)+'%':'0%'},
-                  {label:'At-risk',value:atRiskCount,warn:atRiskCount>0},
+                  {label:'At-risk',value:atRiskCount,warn:atRiskCount>0,clickable:true,active:atRiskOnly,onClick:()=>setAtRiskOnly(v=>!v)},
                   {label:'Shipments this month',value:myShipmentsThisMonth,highlight:true},
                 ].map((m,i)=>(
-                  <div key={i} style={{...S.card,...(m.highlight?{background:'#E6F1FB',border:'0.5px solid #A8C8F0'}:{})}}>
-                    <div style={{fontSize:11,color:m.highlight?'#0C447C':'#888',marginBottom:4}}>{m.label}</div>
+                  <div key={i} onClick={m.onClick} style={{...S.card,...(m.highlight?{background:'#E6F1FB',border:'0.5px solid #A8C8F0'}:{}),...(m.clickable?{cursor:'pointer'}:{}),...(m.active?{background:'#FCEBEB',border:'0.5px solid #F09595'}:{})}}>
+                    <div style={{fontSize:11,color:m.highlight?'#0C447C':'#888',marginBottom:4}}>{m.label}{m.active?' — click to clear':m.clickable?' (click to filter)':''}</div>
                     <div style={{fontSize:22,fontWeight:600,color:m.warn?'#A32D2D':m.highlight?'#0C447C':'#1a1a1a'}}>{m.value}</div>
                     {m.sub&&<div style={{fontSize:11,color:'#888',marginTop:3}}>{m.sub}</div>}
                     {m.highlight&&<div style={{fontSize:11,color:'#0C447C',marginTop:3,opacity:.7}}>resets monthly</div>}
