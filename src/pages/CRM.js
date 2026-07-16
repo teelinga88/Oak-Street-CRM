@@ -193,7 +193,7 @@ export default function CRM(){
     const a=accounts.find(x=>x.id===logState.accountId);if(!a)return;
     const activities=[{text:`[${logState.type}] ${logState.text.trim()}`,time:nowLabel()},...(a.activities||[])];
     await updateAccount(a.id,{activities,lastContact:new Date().toISOString()});
-    if(logState.followupId)await updateFollowup(logState.followupId,{done:true});
+    if(logState.followupId)await updateFollowup(logState.followupId,{done:true,completedAt:today()});
     setModal(null);showToast('Activity logged!');
   }
 
@@ -458,11 +458,11 @@ export default function CRM(){
                 const overdue=myFollowups.filter(f=>!f.done&&f.dueDate<today());
                 const dueToday=myFollowups.filter(f=>!f.done&&f.dueDate===today());
                 const upcoming=myFollowups.filter(f=>!f.done&&f.dueDate>today());
-                const done=myFollowups.filter(f=>f.done).slice(0,5);
+                const done=myFollowups.filter(f=>f.done&&f.completedAt===today());
                 const FuCard=({f})=>(
                   <div style={{border:'0.5px solid #E5E4DF',borderRadius:10,padding:12,marginBottom:8,background:'#fff'}}>
                     <div style={{display:'flex',gap:10}}>
-                      <input type="checkbox" checked={f.done} onChange={async e=>{await updateFollowup(f.id,{done:e.target.checked});}} style={{flexShrink:0,width:15,height:15,cursor:'pointer',marginTop:2}}/>
+                      <input type="checkbox" checked={f.done} onChange={async e=>{await updateFollowup(f.id,{done:e.target.checked,completedAt:e.target.checked?today():null});}} style={{flexShrink:0,width:15,height:15,cursor:'pointer',marginTop:2}}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:600,textDecoration:f.done?'line-through':'none',color:f.done?'#aaa':'#1a1a1a'}}>{f.account}</div>
                         {f.contact&&<div style={{fontSize:11,color:'#888',marginTop:1}}>{f.contact}</div>}
