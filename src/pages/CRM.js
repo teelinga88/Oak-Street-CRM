@@ -387,7 +387,8 @@ export default function CRM(){
                         ):stageDeal.map(d=>(
                           <div key={d.id} onClick={()=>setSelId(d.id)}
                             style={{padding:'10px 12px',border:'0.5px solid #E5E4DF',borderRadius:8,marginBottom:6,cursor:'pointer',background:d.id===selId?'#F7F6F3':'#fff'}}>
-                            <div style={{fontSize:13,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:6}}>{d.account}</div>
+                            <div style={{fontSize:13,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:2}}>{d.account}</div>
+                            {d.location&&<div style={{fontSize:11,color:'#888',marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.location}</div>}
                             <span style={{...srcStyle(d.source),padding:'1px 6px',borderRadius:20,fontSize:10,fontWeight:500}}>{d.source}</span>
                           </div>
                         ))}
@@ -669,13 +670,14 @@ export default function CRM(){
                   <DetailRow k="Source" v={d.source}/>
                   {d.lostReason&&<DetailRow k="Lost reason" v={d.lostReason}/>}
                 </DetailSection>
-                {a&&<DetailSection title="Account info">
-                  {a.contact&&<DetailRow k="Contact" v={a.contact}/>}
-                  {a.email&&<DetailRow k="Email" v={<a href={`mailto:${a.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a.email}</a>}/>}
-                  {a.phone&&<DetailRow k="Phone" v={a.phone}/>}
-                  {a.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
-                  {a.location&&<DetailRow k="Location" v={a.location}/>}
-                  {!a.contact&&!a.email&&!a.phone&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No account info — click Edit account</div>}
+                {(a||d.phone||d.location||d.address)&&<DetailSection title="Account info">
+                  {a?.contact&&<DetailRow k="Contact" v={a.contact}/>}
+                  {a?.email&&<DetailRow k="Email" v={<a href={`mailto:${a.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a.email}</a>}/>}
+                  {(a?.phone||d.phone)&&<DetailRow k="Phone" v={a?.phone||d.phone}/>}
+                  {a?.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
+                  {d.address&&<DetailRow k="Address" v={d.address}/>}
+                  {(a?.location||d.location)&&<DetailRow k="Location" v={a?.location||d.location}/>}
+                  {!a?.contact&&!a?.email&&!a?.phone&&!d.phone&&!d.location&&!d.address&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No account info — click Edit account</div>}
                 </DetailSection>}
                 <DetailSection title="Notes & activity">
                   {d.activities?.length>0?d.activities.map((n,i)=>(
