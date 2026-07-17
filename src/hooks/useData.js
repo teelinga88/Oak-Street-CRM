@@ -148,3 +148,18 @@ export function useBucket(repName) {
 
   return { leads, loading, addLead, updateLead, deleteLead };
 }
+
+// ── Network Lead dismissals ────────────────────────────────────────────────
+// When a rep deletes a Network Lead prospect (deciding it's not worth
+// pursuing), we don't keep the deal around — but without SOME record, the
+// backend sync would just re-detect the same shipper/receiver company from
+// TAI's data on its next run and re-add it as if brand new. This writes a
+// lightweight, invisible-to-the-UI record so the backend can permanently
+// skip that company going forward, without cluttering the actual pipeline.
+export async function dismissNetworkLead(companyName) {
+  if (!companyName) return;
+  return addDoc(collection(db, 'dismissedNetworkLeads'), {
+    company: companyName,
+    dismissedAt: serverTimestamp(),
+  });
+}
