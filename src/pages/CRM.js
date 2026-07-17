@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth, TEAM_ROSTER } from '../context/AuthContext';
-import { useAccounts, useDeals, useFollowups, useBucket } from '../hooks/useData';
+import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead } from '../hooks/useData';
 
 const ACCT_COLORS=[['#E6F1FB','#0C447C'],['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#EEEDFE','#3C3489'],['#FAECE7','#712B13'],['#FBEAF0','#72243E'],['#F0FFF4','#276749'],['#FFF5F5','#C53030'],['#FFFFF0','#744210'],['#E9F0FF','#2B4ECF']];
 const acctColor = n => ACCT_COLORS[(n.charCodeAt(0)+(n.charCodeAt(1)||0))%ACCT_COLORS.length];
@@ -178,6 +178,8 @@ export default function CRM(){
   }
   async function handleDeleteDeal(){
     if(!window.confirm('Delete this prospect?'))return;
+    const deal=deals.find(x=>x.id===modal.id);
+    if(deal?.source==='Network Lead')await dismissNetworkLead(deal.account);
     await deleteDeal(modal.id);setModal(null);setSelId(null);showToast('Prospect deleted');
   }
 
@@ -371,7 +373,7 @@ export default function CRM(){
                   </div>
                 ))}
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:8}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
                 {STAGES.map(s=>{
                   const[bg,fg]=SCOLS[s];
                   const stageDeal=myDeals.filter(d=>d.stage===s&&(!srcFilter||d.source===srcFilter));
@@ -672,17 +674,16 @@ export default function CRM(){
                   {d.shipmentId&&<DetailRow k="Shipment ID" v={d.shipmentId}/>}
                   {d.lostReason&&<DetailRow k="Lost reason" v={d.lostReason}/>}
                 </DetailSection>
-                {(a||d.phone||d.location||d.address||d.email||d.contact)&&<DetailSection title="Account info">
+                <DetailSection title="Account info">
                   {(a?.contact||d.contact)&&<DetailRow k="Contact" v={a?.contact||d.contact}/>}
-                  {(a?.email||d.email)&&<DetailRow k="Email" v={<a href={`mailto:${a?.email||d.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a?.email||d.email}</a>}/>}
+                  <DetailRow k="Email" v={(a?.email||d.email)?<a href={`mailto:${a?.email||d.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a?.email||d.email}</a>:<span style={{color:'#bbb'}}>Not set — click Edit prospect to add</span>}/>
                   {(a?.phone||d.phone)&&<DetailRow k="Phone" v={a?.phone||d.phone}/>}
                   {a?.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
                   {d.address&&<DetailRow k="Address" v={d.address}/>}
                   {(a?.location||d.location)&&<DetailRow k="Location" v={a?.location||d.location}/>}
                   {d.zip&&<DetailRow k="Zip" v={d.zip}/>}
-                  {!a?.contact&&!a?.email&&!a?.phone&&!d.phone&&!d.location&&!d.address&&!d.email&&!d.contact&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No account info yet — click Edit prospect to add</div>}
                   {a&&<button style={{...S.btn,fontSize:11,marginTop:8}} onClick={()=>openAccountModal(a.id)}>Edit account →</button>}
-                </DetailSection>}
+                </DetailSection>
                 <DetailSection title="Notes & activity">
                   {d.activities?.length>0?d.activities.map((n,i)=>(
                     <div key={i} style={{display:'flex',gap:8,marginBottom:10}}>
