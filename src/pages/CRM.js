@@ -672,15 +672,16 @@ export default function CRM(){
                   {d.shipmentId&&<DetailRow k="Shipment ID" v={d.shipmentId}/>}
                   {d.lostReason&&<DetailRow k="Lost reason" v={d.lostReason}/>}
                 </DetailSection>
-                {(a||d.phone||d.location||d.address)&&<DetailSection title="Account info">
-                  {a?.contact&&<DetailRow k="Contact" v={a.contact}/>}
-                  {a?.email&&<DetailRow k="Email" v={<a href={`mailto:${a.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a.email}</a>}/>}
+                {(a||d.phone||d.location||d.address||d.email||d.contact)&&<DetailSection title="Account info">
+                  {(a?.contact||d.contact)&&<DetailRow k="Contact" v={a?.contact||d.contact}/>}
+                  {(a?.email||d.email)&&<DetailRow k="Email" v={<a href={`mailto:${a?.email||d.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a?.email||d.email}</a>}/>}
                   {(a?.phone||d.phone)&&<DetailRow k="Phone" v={a?.phone||d.phone}/>}
                   {a?.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
                   {d.address&&<DetailRow k="Address" v={d.address}/>}
                   {(a?.location||d.location)&&<DetailRow k="Location" v={a?.location||d.location}/>}
                   {d.zip&&<DetailRow k="Zip" v={d.zip}/>}
-                  {!a?.contact&&!a?.email&&!a?.phone&&!d.phone&&!d.location&&!d.address&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No account info — click Edit account</div>}
+                  {!a?.contact&&!a?.email&&!a?.phone&&!d.phone&&!d.location&&!d.address&&!d.email&&!d.contact&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No account info yet — click Edit prospect to add</div>}
+                  {a&&<button style={{...S.btn,fontSize:11,marginTop:8}} onClick={()=>openAccountModal(a.id)}>Edit account →</button>}
                 </DetailSection>}
                 <DetailSection title="Notes & activity">
                   {d.activities?.length>0?d.activities.map((n,i)=>(
@@ -775,7 +776,22 @@ export default function CRM(){
       {modal?.type==='deal'&&(
         <Modal title={modal.id?'Edit prospect':'New prospect'} onClose={()=>setModal(null)} onSave={saveDeal} showDelete={!!modal.id} onDelete={handleDeleteDeal}>
           {modal.id?(
-            <FRow label="Prospect"><div style={{fontSize:15,fontWeight:600,padding:'4px 0'}}>{df.account}</div></FRow>
+            <>
+              <FRow label="Prospect"><div style={{fontSize:15,fontWeight:600,padding:'4px 0'}}>{df.account}</div></FRow>
+              {!df.accountId&&(
+                <div style={{background:'#F7F6F3',border:'0.5px solid #E5E4DF',borderRadius:8,padding:12,marginTop:4,marginBottom:8}}>
+                  <div style={{fontSize:11,fontWeight:500,color:'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:10}}>📇 Account info</div>
+                  <FRow label="Contact name"><input style={S.input} value={df.contact||''} onChange={e=>setDf({...df,contact:e.target.value})} placeholder="John Smith"/></FRow>
+                  <FRow label="Email"><input style={S.input} type="email" value={df.email||''} onChange={e=>setDf({...df,email:e.target.value})} placeholder="john@company.com"/></FRow>
+                  <FRow label="Phone"><input style={S.input} value={df.phone||''} onChange={e=>setDf({...df,phone:e.target.value})} placeholder="555-000-0000"/></FRow>
+                  <FRow label="Address"><input style={S.input} value={df.address||''} onChange={e=>setDf({...df,address:e.target.value})} placeholder="123 Main St"/></FRow>
+                  <FGrid>
+                    <FRow label="City, State"><input style={S.input} value={df.location||''} onChange={e=>setDf({...df,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
+                    <FRow label="Zip"><input style={S.input} value={df.zip||''} onChange={e=>setDf({...df,zip:e.target.value})} placeholder="60601"/></FRow>
+                  </FGrid>
+                </div>
+              )}
+            </>
           ):(
             <FRow label="Company name *">
               <input style={S.input} value={dealCompany} onChange={e=>handleCompanyInput(e.target.value)} placeholder="Search or type new company…" autoComplete="off"/>
