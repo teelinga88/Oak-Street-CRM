@@ -221,7 +221,8 @@ export default function CRM(){
   const[isNewProspect,setIsNewProspect]=useState(false);
   function openDealModal(id=null){
     const d=id?deals.find(x=>x.id===id):null;
-    setDf(d?{...d}:{stage:'New Lead',source:'Cold Call',lostReason:'',activities:[]});
+    const linkedAcct=d?.accountId?accounts.find(x=>x.id===d.accountId):null;
+    setDf(d?{...d,...(linkedAcct?{contact:linkedAcct.contact||'',email:linkedAcct.email||'',phone:linkedAcct.phone||'',address:linkedAcct.address||'',location:linkedAcct.location||'',zip:linkedAcct.zip||''}:{})}:{stage:'New Lead',source:'Cold Call',lostReason:'',activities:[]});
     setDealCompany(d?.account||'');setIsNewProspect(false);setCompanySuggs([]);setModal({type:'deal',id});
   }
   function handleCompanyInput(val){
@@ -245,6 +246,9 @@ export default function CRM(){
     if(modal.id){
       const oldStage=deals.find(x=>x.id===modal.id)?.stage;
       if(stage!==oldStage)activities.unshift({text:`Stage changed: ${oldStage} → ${stage}`,time:nowLabel()});
+      if(accountId){
+        await updateAccount(accountId,{contact:df.contact||'',email:df.email||'',phone:df.phone||'',address:df.address||'',location:df.location||'',zip:df.zip||''});
+      }
       await updateDeal(modal.id,{...df,activities,newNote:null});
     }else{
       activities.push({text:'Prospect added to pipeline',time:nowLabel()});
@@ -694,7 +698,6 @@ export default function CRM(){
             {selId&&view==='pipeline'&&(
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openDealModal(selId)}>✏️ Edit prospect</button>
-                {selectedDeal?.accountId&&<button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selectedDeal.accountId)}>🏢 Edit account</button>}
                 <button style={{...S.btnPrimary,padding:'4px 10px',fontSize:11,background:'#3B6D11',borderColor:'#3B6D11'}} onClick={()=>handleCloseWon(selId)}>🎉 Closed Won</button>
               </>
             )}
@@ -788,7 +791,6 @@ export default function CRM(){
                   {d.address&&<DetailRow k="Address" v={d.address}/>}
                   {(a?.location||d.location)&&<DetailRow k="Location" v={a?.location||d.location}/>}
                   {d.zip&&<DetailRow k="Zip" v={d.zip}/>}
-                  {a&&<button style={{...S.btn,fontSize:11,marginTop:8}} onClick={()=>openAccountModal(a.id)}>Edit account →</button>}
                 </DetailSection>
                 <DetailSection title="Notes & activity">
                   {d.activities?.length>0?d.activities.map((n,i)=>(
@@ -885,7 +887,7 @@ export default function CRM(){
           {modal.id?(
             <>
               <FRow label="Prospect"><div style={{fontSize:15,fontWeight:600,padding:'4px 0'}}>{df.account}</div></FRow>
-              {!df.accountId&&(
+              {(
                 <div style={{background:'#F7F6F3',border:'0.5px solid #E5E4DF',borderRadius:8,padding:12,marginTop:4,marginBottom:8}}>
                   <div style={{fontSize:11,fontWeight:500,color:'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:10}}>📇 Account info</div>
                   <FRow label="Contact name"><input style={S.input} value={df.contact||''} onChange={e=>setDf({...df,contact:e.target.value})} placeholder="John Smith"/></FRow>
