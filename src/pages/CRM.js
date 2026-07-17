@@ -1,7 +1,6 @@
-// trigger redeploy 1784311877
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth, TEAM_ROSTER } from '../context/AuthContext';
-import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead } from '../hooks/useData';
+import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, useCelebrations, addCelebration } from '../hooks/useData';
 
 const ACCT_COLORS=[['#E6F1FB','#0C447C'],['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#EEEDFE','#3C3489'],['#FAECE7','#712B13'],['#FBEAF0','#72243E'],['#F0FFF4','#276749'],['#FFF5F5','#C53030'],['#FFFFF0','#744210'],['#E9F0FF','#2B4ECF']];
 const acctColor = n => ACCT_COLORS[(n.charCodeAt(0)+(n.charCodeAt(1)||0))%ACCT_COLORS.length];
@@ -11,6 +10,7 @@ const nowLabel = () => new Date().toLocaleString('en-US',{month:'short',day:'num
 const fmtDate = d => { if(!d) return '—'; return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
 const daysAgo = iso => { if(!iso) return '—'; const d=Math.floor((Date.now()-new Date(iso))/(864e5)); if(d===0)return'Today'; if(d===1)return'Yesterday'; if(d<7)return d+' days ago'; return Math.floor(d/7)+' wks ago'; };
 const daysSince = iso => { if(!iso) return null; return Math.floor((Date.now()-new Date(iso))/(864e5)); };
+const isThisMonth = iso => { if(!iso) return false; const d=new Date(iso); const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth(); };
 const isAtRisk = a => { const d = daysSince(a.lastShipmentDate); return d === null ? false : d >= 60; };
 
 function getMonthKey(offset=0) {
@@ -28,8 +28,8 @@ function getTrending(account) {
   return {pct:0,dir:'flat'};
 }
 
-const STAGES=['New Lead','Contact Made','Quoting','Closed Won'];
-const SCOLS={'New Lead':['#F1EFE8','#5F5E5A'],'Contact Made':['#FAEEDA','#633806'],'Quoting':['#E6F1FB','#0C447C'],'Closed Won':['#EAF3DE','#3B6D11'],'Closed Lost':['#FCEBEB','#A32D2D']};
+const STAGES=['New Lead','Attempted','Contact Made','Quoting'];
+const SCOLS={'New Lead':['#F1EFE8','#5F5E5A'],'Attempted':['#FDF0D9','#8A5A12'],'Contact Made':['#FAEEDA','#633806'],'Quoting':['#E6F1FB','#0C447C'],'Closed Won':['#EAF3DE','#3B6D11'],'Closed Lost':['#FCEBEB','#A32D2D']};
 const SOURCES=['Cold Call','Referral','Network Lead'];
 const LOST_REASONS=['Price too high','Went with competitor','No volume available','No response','Other'];
 const ACT_TYPES=['Call','Email','Meeting','Note','Other'];
@@ -69,6 +69,71 @@ function FGrid({children}){return <div style={{display:'grid',gridTemplateColumn
 function DetailSection({title,children}){return(<div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:500,color:'#aaa',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:6}}>{title}</div>{children}</div>);}
 function DetailRow({k,v}){return(<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,padding:'4px 0',borderBottom:'0.5px solid #F0EFE8'}}><span style={{color:'#888'}}>{k}</span><span style={{fontWeight:500,textAlign:'right',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v}</span></div>);}
 
+// ── Closed Won celebration ───────────────────────────────────────────────
+// A short ascending 4-note chime, synthesized with the Web Audio API so no
+// audio file needs to be bundled/hosted. Fires locally for whoever triggers
+// it, and — via the shared `celebrations` Firestore doc — for every other
+// rep's browser too.
+function playFanfare(){
+  try{
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx)return;
+    const ctx=new Ctx();
+    const notes=[523.25,659.25,783.99,1046.50];
+    notes.forEach((freq,i)=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.type='triangle';
+      osc.frequency.value=freq;
+      const start=ctx.currentTime+i*0.12;
+      gain.gain.setValueAtTime(0,start);
+      gain.gain.linearRampToValueAtTime(0.28,start+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,start+0.4);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);osc.stop(start+0.42);
+    });
+  }catch(e){/* audio not available — visual fireworks still show */}
+}
+
+function Fireworks(){
+  const colors=['#FFC700','#FF3D71','#00D9FF','#7ED957','#FF8A00','#C77DFF'];
+  const bursts=useMemo(()=>['22%','50%','78%','36%','64%'].map((x,bi)=>({
+    x, y:['30%','18%','32%','56%','52%'][bi],
+    particles:Array.from({length:18}).map((_,i)=>{
+      const angle=(i/18)*2*Math.PI;
+      const dist=55+Math.random()*55;
+      return{dx:Math.cos(angle)*dist,dy:Math.sin(angle)*dist,color:colors[(i+bi)%colors.length],dur:0.9+Math.random()*0.5};
+    }),
+  })),[]);
+  return(
+    <div style={{position:'fixed',inset:0,zIndex:300,pointerEvents:'none',overflow:'hidden'}}>
+      <style>{`
+        @keyframes fwParticle{
+          0%{transform:translate(0,0) scale(1);opacity:1;}
+          100%{transform:translate(var(--dx),var(--dy)) scale(0.3);opacity:0;}
+        }
+        @keyframes fwBanner{
+          0%{transform:translate(-50%,-60%) scale(0.6);opacity:0;}
+          15%{transform:translate(-50%,-50%) scale(1.05);opacity:1;}
+          85%{transform:translate(-50%,-50%) scale(1);opacity:1;}
+          100%{transform:translate(-50%,-50%) scale(0.9);opacity:0;}
+        }
+      `}</style>
+      {bursts.map((b,bi)=>(
+        <div key={bi} style={{position:'absolute',left:b.x,top:b.y}}>
+          {b.particles.map((p,i)=>(
+            <div key={i} style={{
+              position:'absolute',width:6,height:6,borderRadius:'50%',background:p.color,
+              '--dx':`${p.dx}px`,'--dy':`${p.dy}px`,
+              animation:`fwParticle ${p.dur}s ease-out ${bi*0.15}s forwards`,
+            }}/>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CRM(){
   const{repProfile,logout}=useAuth();
   const isManager=repProfile?.isManager||false;
@@ -88,6 +153,16 @@ export default function CRM(){
   const[mgrSel,setMgrSel]=useState(null);
   const[toast,setToast]=useState('');
   function showToast(msg){setToast(msg);setTimeout(()=>setToast(''),3000);}
+  const[colSearch,setColSearch]=useState({});
+  const celebration=useCelebrations();
+  const[activeCelebration,setActiveCelebration]=useState(null);
+  useEffect(()=>{
+    if(!celebration)return;
+    setActiveCelebration(celebration);
+    playFanfare();
+    const t=setTimeout(()=>setActiveCelebration(null),4500);
+    return()=>clearTimeout(t);
+  },[celebration?.id]);
 
   const myAccounts=useMemo(()=>accounts.filter(a=>a.rep===repName),[accounts,repName]);
   const myDeals=useMemo(()=>deals.filter(d=>d.rep===repName),[deals,repName]);
@@ -182,6 +257,31 @@ export default function CRM(){
     const deal=deals.find(x=>x.id===modal.id);
     if(deal?.source==='Network Lead')await dismissNetworkLead(deal.account);
     await deleteDeal(modal.id);setModal(null);setSelId(null);showToast('Prospect deleted');
+  }
+
+  async function handleCloseWon(dealId){
+    const deal=deals.find(x=>x.id===dealId);
+    if(!deal)return;
+    if(!window.confirm(`Mark "${deal.account}" as Closed Won? This moves it into My Accounts as an Active account.`))return;
+    let accountId=deal.accountId;
+    const wonAt=new Date().toISOString();
+    if(accountId){
+      const acct=accounts.find(a=>a.id===accountId);
+      const activities=[{text:'🎉 Closed Won — converted from pipeline',time:nowLabel()},...(acct?.activities||[])];
+      await updateAccount(accountId,{status:'Active',activities,wonAt});
+    }else{
+      const newAcct=await addAccount({
+        name:deal.account,industry:'',location:deal.location||'',status:'Active',
+        contact:deal.contact||'',email:deal.email||'',phone:deal.phone||'',
+        rep:deal.rep||repName,shipmentType:'',commodity:'',notes:'',wonAt,
+        activities:[{text:'🎉 Closed Won — converted from pipeline',time:nowLabel()}],
+      });
+      accountId=newAcct.id;
+    }
+    await deleteDeal(dealId);
+    await addCelebration({rep:deal.rep||repName,account:deal.account});
+    setSelId(null);
+    showToast(`🎉 ${deal.account} marked Closed Won!`);
   }
 
   const[ff,setFf]=useState({});
@@ -366,7 +466,7 @@ export default function CRM(){
                 {[
                   {label:'Active prospects',value:myDeals.filter(d=>!['Closed Won','Closed Lost'].includes(d.stage)).length},
                   {label:'In quoting',value:myDeals.filter(d=>d.stage==='Quoting').length},
-                  {label:'Closed won',value:myDeals.filter(d=>d.stage==='Closed Won').length,up:true},
+                  {label:'Closed won (this month)',value:myAccounts.filter(a=>a.wonAt&&isThisMonth(a.wonAt)).length,up:true},
                 ].map((m,i)=>(
                   <div key={i} style={S.card}>
                     <div style={{fontSize:11,color:'#888',marginBottom:4}}>{m.label}</div>
@@ -377,12 +477,16 @@ export default function CRM(){
               <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
                 {STAGES.map(s=>{
                   const[bg,fg]=SCOLS[s];
-                  const stageDeal=myDeals.filter(d=>d.stage===s&&(!srcFilter||d.source===srcFilter));
+                  const q=(colSearch[s]||'').trim().toLowerCase();
+                  const stageDeal=myDeals.filter(d=>d.stage===s&&(!srcFilter||d.source===srcFilter)&&(!q||d.account.toLowerCase().includes(q)));
                   return(
                     <div key={s} style={{border:'0.5px solid #E5E4DF',borderRadius:10,overflow:'hidden',display:'flex',flexDirection:'column'}}>
                       <div style={{padding:'8px 10px',background:bg,borderBottom:'0.5px solid #E5E4DF'}}>
                         <span style={{fontSize:12,fontWeight:500,color:fg}}>{s}</span>
                         <span style={{fontSize:11,color:fg,marginLeft:5,opacity:.7}}>{stageDeal.length}</span>
+                      </div>
+                      <div style={{padding:'6px 8px',borderBottom:'0.5px solid #E5E4DF',background:'#fff'}}>
+                        <input value={colSearch[s]||''} onChange={e=>setColSearch({...colSearch,[s]:e.target.value})} placeholder="Search…" style={{width:'100%',fontSize:11,fontFamily:'inherit',padding:'5px 8px',border:'0.5px solid #E5E4DF',borderRadius:6,outline:'none',boxSizing:'border-box'}}/>
                       </div>
                       <div style={{padding:8,flex:1,overflowY:'auto',maxHeight:320}}>
                         {stageDeal.length===0?(
@@ -551,7 +655,7 @@ export default function CRM(){
                         <div style={{fontSize:11,color:'#888'}}>{repAccts.length} accts</div>
                         <div style={{textAlign:'center',fontSize:13,fontWeight:500}}>{repDeals.filter(d=>d.stage==='New Lead').length}</div>
                         <div style={{textAlign:'center',fontSize:13,fontWeight:500}}>{repDeals.filter(d=>d.stage==='Contact Made').length}</div>
-                        <div style={{textAlign:'center',fontSize:13,fontWeight:600,color:'#3B6D11'}}>{repDeals.filter(d=>d.stage==='Closed Won').length}</div>
+                        <div style={{textAlign:'center',fontSize:13,fontWeight:600,color:'#3B6D11'}}>{repAccts.filter(a=>a.wonAt&&isThisMonth(a.wonAt)).length}</div>
                         <div style={{textAlign:'center',fontSize:13}}>{repFu.length} F/U</div>
                       </div>
                     );
@@ -560,7 +664,7 @@ export default function CRM(){
               </div>
               <div>
                 <div style={{fontWeight:500,marginBottom:10}}>Pipeline — all reps</div>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
                   {STAGES.filter(s=>s!=='Closed Lost').map(s=>{
                     const[,fg]=SCOLS[s];
                     const sd=deals.filter(d=>d.stage===s);
@@ -591,6 +695,7 @@ export default function CRM(){
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openDealModal(selId)}>✏️ Edit prospect</button>
                 {selectedDeal?.accountId&&<button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selectedDeal.accountId)}>🏢 Edit account</button>}
+                <button style={{...S.btnPrimary,padding:'4px 10px',fontSize:11,background:'#3B6D11',borderColor:'#3B6D11'}} onClick={()=>handleCloseWon(selId)}>🎉 Closed Won</button>
               </>
             )}
           </div>
@@ -864,6 +969,18 @@ export default function CRM(){
       )}
 
       {toast&&<div style={{position:'fixed',bottom:16,left:'50%',transform:'translateX(-50%)',background:'#1a1a1a',color:'#fff',padding:'8px 16px',borderRadius:8,fontSize:12,zIndex:200,whiteSpace:'nowrap'}}>{toast}</div>}
+
+      {activeCelebration&&(
+        <>
+          <Fireworks/>
+          <div style={{position:'fixed',top:'50%',left:'50%',zIndex:301,textAlign:'center',animation:'fwBanner 4.5s ease-out forwards',pointerEvents:'none'}}>
+            <div style={{fontSize:42,marginBottom:6}}>🎉🎆🎉</div>
+            <div style={{background:'#1a1a1a',color:'#fff',padding:'10px 22px',borderRadius:12,fontSize:16,fontWeight:600,boxShadow:'0 8px 30px rgba(0,0,0,.25)'}}>
+              {activeCelebration.rep} just closed <span style={{color:'#8FE388'}}>{activeCelebration.account}</span>! 🎉
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
