@@ -235,11 +235,7 @@ export default function CRM(){
     const accountName=modal.id?df.account:dealCompany.trim();
     if(!accountName){showToast('Company name required');return;}
     const stage=df.stage||'New Lead';
-    let accountId=df.accountId||null;
-    if(!modal.id&&isNewProspect){
-      const newAcct=await addAccount({name:accountName,industry:df.npIndustry||'',location:df.npLocation||'',status:'Active',contact:df.npContact||'',email:df.npEmail||'',phone:df.npPhone||'',rep:repName,shipmentType:df.npShipmentType||'',commodity:'',notes:''});
-      accountId=newAcct.id;
-    }
+    const accountId=df.accountId||null;
     const note=df.newNote?.trim();
     const activities=df.activities||[];
     if(note)activities.unshift({text:note,time:nowLabel()});
@@ -251,8 +247,15 @@ export default function CRM(){
       }
       await updateDeal(modal.id,{...df,activities,newNote:null});
     }else{
+      // Note: a brand-new prospect never gets an Account here, even if optional
+      // contact details were filled in — it isn't a real customer yet. The
+      // contact info lives on the deal itself until it's actually Closed Won
+      // (see handleCloseWon), which is the only place an Account gets created.
       activities.push({text:'Prospect added to pipeline',time:nowLabel()});
-      await addDeal({account:accountName,accountId,stage,source:df.source,rep:repName,lostReason:'',activities});
+      await addDeal({
+        account:accountName,accountId:null,stage,source:df.source,rep:repName,lostReason:'',activities,
+        contact:df.npContact||'',email:df.npEmail||'',phone:df.npPhone||'',location:df.npLocation||'',shipmentType:df.npShipmentType||'',
+      });
     }
     setModal(null);showToast('Prospect saved!');
   }
@@ -308,12 +311,18 @@ export default function CRM(){
   }
 
   const[logState,setLogState]=useState({type:'Call',text:''});
-  function openLogModal(accountId,followupId=null){setLogState({accountId,followupId,type:'Call',text:''});setModal({type:'log'});}
+  function openLogModal(accountId,followupId=null,dealId=null){setLogState({accountId,followupId,dealId,type:'Call',text:''});setModal({type:'log'});}
   async function saveLog(){
     if(!logState.text?.trim()){showToast('Description required');return;}
-    const a=accounts.find(x=>x.id===logState.accountId);if(!a)return;
-    const activities=[{text:`[${logState.type}] ${logState.text.trim()}`,time:nowLabel()},...(a.activities||[])];
-    await updateAccount(a.id,{activities,lastContact:new Date().toISOString()});
+    const entry={text:`[${logState.type}] ${logState.text.trim()}`,time:nowLabel()};
+    if(logState.accountId){
+      const a=accounts.find(x=>x.id===logState.accountId);if(!a)return;
+      await updateAccount(a.id,{activities:[entry,...(a.activities||[])],lastContact:new Date().toISOString()});
+    }else if(logState.dealId){
+      // No linked Account yet (still just a prospect) — log against the deal itself.
+      const d=deals.find(x=>x.id===logState.dealId);if(!d)return;
+      await updateDeal(d.id,{activities:[entry,...(d.activities||[])]});
+    }else return;
     if(logState.followupId)await updateFollowup(logState.followupId,{done:true,completedAt:today()});
     setModal(null);showToast('Activity logged!');
   }
@@ -557,10 +566,12 @@ export default function CRM(){
                           const note=window.prompt('What happened?');if(!note)return;
                           const dueDate=new Date(Date.now()+864e5).toISOString().split('T')[0];
                           await deleteLead(lead.id);
-                          let acct=accounts.find(a=>a.name.toLowerCase()===lead.company.toLowerCase());
-                          if(!acct){const ref=await addAccount({name:lead.company,industry:'',location:lead.location||'',status:'Active',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',rep:repName,shipmentType:'',commodity:'',notes:'',activities:[{text:`[Call] ${note}`,time:nowLabel()}],lastContact:new Date().toISOString()});acct={id:ref.id,name:lead.company};}
-                          await addDeal({account:acct.name,accountId:acct.id,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',activities:[{text:note,time:nowLabel()}]});
-                          await addFollowup({accountId:acct.id,account:acct.name,contact:lead.contact||'',email:lead.email||'',dueDate,rep:repName,notes:note,done:false});
+                          // No Account gets created here — a cold call being
+                          // contacted isn't a customer yet. Contact info rides
+                          // on the deal itself; an Account only gets created
+                          // once this prospect is actually Closed Won.
+                          const dealRef=await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',activities:[{text:note,time:nowLabel()}]});
+                          await addFollowup({accountId:null,dealId:dealRef.id,account:lead.company,contact:lead.contact||'',email:lead.email||'',dueDate,rep:repName,notes:note,done:false});
                           showToast('Lead moved to Contact Made!');
                         }}>📞 Contacted</button>
                       </div>
@@ -599,7 +610,7 @@ export default function CRM(){
                         </div>
                       </div>
                     </div>
-                    {!f.done&&f.accountId&&<div style={{marginTop:8}}><button style={{...S.btnLog,width:'100%',justifyContent:'center',fontSize:11}} onClick={()=>openLogModal(f.accountId,f.id)}>✏️ Log what happened</button></div>}
+                    {!f.done&&(f.accountId||f.dealId)&&<div style={{marginTop:8}}><button style={{...S.btnLog,width:'100%',justifyContent:'center',fontSize:11}} onClick={()=>openLogModal(f.accountId,f.id,f.dealId)}>✏️ Log what happened</button></div>}
                   </div>
                 );
                 return(
