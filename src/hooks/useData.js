@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   collection, query, where, onSnapshot, addDoc, updateDoc,
-  deleteDoc, doc, serverTimestamp, orderBy
+  deleteDoc, doc, serverTimestamp, orderBy, limit
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -161,5 +161,45 @@ export async function dismissNetworkLead(companyName) {
   return addDoc(collection(db, 'dismissedNetworkLeads'), {
     company: companyName,
     dismissedAt: serverTimestamp(),
+  });
+}
+
+// ── Celebrations (shared "Closed Won" broadcast) ────────────────────────────
+// When any rep closes a deal, we drop a lightweight doc here so every other
+// connected rep's browser can react in real time (fireworks + a sound) and
+// celebrate together, without needing a backend push/notification service.
+// Only the single most recent doc is ever read, and each client only reacts
+// to it once and only if it's fresh — so loading the app later doesn't replay
+// old celebrations.
+export function useCelebrations() {
+  const [celebration, setCelebration] = useState(null);
+
+  useEffect(() => {
+    const mountedAt = Date.now();
+    const seen = new Set();
+    const q = query(collection(db, 'celebrations'), orderBy('createdAt', 'desc'), limit(1));
+    const unsub = onSnapshot(q, snap => {
+      snap.docChanges().forEach(change => {
+        if (change.type !== 'added') return;
+        if (seen.has(change.doc.id)) return;
+        seen.add(change.doc.id);
+        const data = change.doc.data();
+        const ts = data.createdAt?.toDate?.()?.getTime() || Date.now();
+        // Ignore anything older than 15s — either a historical doc replayed
+        // on first load, or a celebration that already finished elsewhere.
+        if (Date.now() - ts > 15000) return;
+        setCelebration({ rep: data.rep, account: data.account, id: change.doc.id, firedAt: mountedAt + Math.random() });
+      });
+    });
+    return unsub;
+  }, []);
+
+  return celebration;
+}
+
+export async function addCelebration(data) {
+  return addDoc(collection(db, 'celebrations'), {
+    ...data,
+    createdAt: serverTimestamp(),
   });
 }
