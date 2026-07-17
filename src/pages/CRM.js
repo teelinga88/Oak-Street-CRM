@@ -679,6 +679,7 @@ export default function CRM(){
                   {a?.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
                   {d.address&&<DetailRow k="Address" v={d.address}/>}
                   {(a?.location||d.location)&&<DetailRow k="Location" v={a?.location||d.location}/>}
+                  {d.zip&&<DetailRow k="Zip" v={d.zip}/>}
                   {!a?.contact&&!a?.email&&!a?.phone&&!d.phone&&!d.location&&!d.address&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No account info — click Edit account</div>}
                 </DetailSection>}
                 <DetailSection title="Notes & activity">
