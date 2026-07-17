@@ -668,6 +668,8 @@ export default function CRM(){
                 <DetailSection title="Prospect info">
                   <DetailRow k="Stage" v={d.stage}/>
                   <DetailRow k="Source" v={d.source}/>
+                  {d.customerName&&<DetailRow k="From Customer" v={d.customerName}/>}
+                  {d.shipmentId&&<DetailRow k="Shipment ID" v={d.shipmentId}/>}
                   {d.lostReason&&<DetailRow k="Lost reason" v={d.lostReason}/>}
                 </DetailSection>
                 {(a||d.phone||d.location||d.address)&&<DetailSection title="Account info">
