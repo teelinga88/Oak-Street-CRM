@@ -474,8 +474,8 @@ export default function CRM(){
                 <button style={S.btnPrimary} onClick={()=>openDealModal()}>+ New prospect</button>
               </div>
             </div>
-            <div style={{flex:1,overflowY:'auto',padding:16}}>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+            <div style={{flex:1,overflow:'hidden',padding:16,display:'flex',flexDirection:'column'}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16,flexShrink:0}}>
                 {[
                   {label:'Active prospects',value:myDeals.filter(d=>!['Closed Won','Closed Lost'].includes(d.stage)).length},
                   {label:'In quoting',value:myDeals.filter(d=>d.stage==='Quoting').length},
@@ -487,7 +487,7 @@ export default function CRM(){
                   </div>
                 ))}
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gridTemplateRows:'1fr',gap:8,flex:1,minHeight:0}}>
                 {STAGES.map(s=>{
                   const[bg,fg]=SCOLS[s];
                   const q=(colSearch[s]||'').trim().toLowerCase();
@@ -501,7 +501,7 @@ export default function CRM(){
                       <div style={{padding:'6px 8px',borderBottom:'0.5px solid #E5E4DF',background:'#fff'}}>
                         <input value={colSearch[s]||''} onChange={e=>setColSearch({...colSearch,[s]:e.target.value})} placeholder="Search…" style={{width:'100%',fontSize:11,fontFamily:'inherit',padding:'5px 8px',border:'0.5px solid #E5E4DF',borderRadius:6,outline:'none',boxSizing:'border-box'}}/>
                       </div>
-                      <div style={{padding:8,flex:1,overflowY:'auto',maxHeight:320}}>
+                      <div style={{padding:8,flex:1,overflowY:'auto',minHeight:0}}>
                         {stageDeal.length===0?(
                           <div style={{fontSize:11,color:'#aaa',padding:'10px 4px',textAlign:'center'}}>No prospects</div>
                         ):stageDeal.map(d=>(
