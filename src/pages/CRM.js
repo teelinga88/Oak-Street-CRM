@@ -358,7 +358,7 @@ export default function CRM(){
       <div style={{width:210,borderRight:'0.5px solid #E5E4DF',background:'#F7F6F3',display:'flex',flexDirection:'column',flexShrink:0}}>
         <div style={{padding:'16px 16px 12px',borderBottom:'0.5px solid #E5E4DF'}}>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <span style={{fontSize:16}}>🚚</span>
+            <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:24,height:24,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
             <div><div style={{fontWeight:600,fontSize:13}}>Oak Street Logistics</div><div style={{fontSize:11,color:'#888'}}>Sales CRM</div></div>
           </div>
         </div>
