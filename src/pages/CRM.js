@@ -386,7 +386,7 @@ export default function CRM(){
         {view==='accounts'&&(
           <>
             <div style={{padding:'16px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600}}>My Accounts</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Accounts</h2>
               <div style={{display:'flex',gap:8}}>
                 <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
                   <option value="">All statuses</option>{ACCT_STATUSES.map(s=><option key={s}>{s}</option>)}
@@ -481,7 +481,7 @@ export default function CRM(){
         {view==='pipeline'&&(
           <>
             <div style={{padding:'16px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600}}>My Pipeline</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Pipeline</h2>
               <div style={{display:'flex',gap:8}}>
                 <select value={srcFilter} onChange={e=>setSrcFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
                   <option value="">All sources</option>{SOURCES.map(s=><option key={s}>{s}</option>)}
@@ -540,7 +540,7 @@ export default function CRM(){
         {view==='bucket'&&(
           <>
             <div style={{padding:'16px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600}}>{repProfile?.name.split(' ')[0]}'s Cold Call Bucket</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{repProfile?.name.split(' ')[0]}'s Cold Call Bucket</h2>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:12,color:'#888'}}>{leads.length} / {BUCKET_CAP}</span>
                 <button style={S.btnPrimary} onClick={openBucketForm}>+ Add lead</button>
@@ -603,7 +603,7 @@ export default function CRM(){
         {view==='followups'&&(
           <>
             <div style={{padding:'16px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600}}>My Follow-ups</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Follow-ups</h2>
               <button style={S.btnPrimary} onClick={()=>openFollowupModal()}>+ Schedule follow-up</button>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:16}}>
@@ -647,7 +647,7 @@ export default function CRM(){
         {view==='manager'&&isManager&&(
           <>
             <div style={{padding:'16px 16px',borderBottom:'0.5px solid #E5E4DF',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600}}>Manager Dashboard</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>Manager Dashboard</h2>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:16}}>
               <div style={{marginBottom:20}}>
@@ -738,7 +738,7 @@ export default function CRM(){
       {/* DETAIL PANEL */}
       <div style={{width:380,borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
         <div style={{padding:'16px 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <h3 style={{fontSize:13,fontWeight:600}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
+          <h3 style={{fontSize:13,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
           <div style={{display:'flex',gap:6}}>
             {selId&&view==='accounts'&&<button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>}
             {selId&&view==='pipeline'&&(
