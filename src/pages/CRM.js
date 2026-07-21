@@ -292,16 +292,18 @@ export default function CRM(){
   }
 
   const[ff,setFf]=useState({});
-  function openFollowupModal(id=null,prefillAccountId=null){
+  function openFollowupModal(id=null,prefillAccountId=null,prefillDealId=null){
     const f=id?followups.find(x=>x.id===id):null;
     const tomorrow=new Date(Date.now()+864e5).toISOString().split('T')[0];
-    setFf(f?{...f}:{accountId:prefillAccountId||'',account:'',dueDate:tomorrow,contact:'',email:'',notes:''});
+    const deal=prefillDealId?deals.find(x=>x.id===prefillDealId):null;
+    setFf(f?{...f}:{accountId:prefillAccountId||'',dealId:prefillDealId||'',account:deal?.account||'',dueDate:tomorrow,contact:deal?.contact||'',email:deal?.email||'',notes:''});
     setModal({type:'followup',id});
   }
   async function saveFollowup(){
     if(!ff.dueDate){showToast('Due date required');return;}
-    const acct=accounts.find(a=>a.id===ff.accountId);
-    const data={...ff,account:acct?.name||ff.account,rep:repName};
+    let account=ff.account;
+    if(ff.accountId){const acct=accounts.find(a=>a.id===ff.accountId);account=acct?.name||account;}
+    const data={...ff,account,rep:repName};
     if(modal.id){await updateFollowup(modal.id,data);}else{await addFollowup(data);}
     setModal(null);showToast('Follow-up saved!');
   }
@@ -564,14 +566,15 @@ export default function CRM(){
                         }}>📵 Attempted</button>
                         <button style={{...S.btnPrimary,flex:1,justifyContent:'center',fontSize:11}} onClick={async()=>{
                           const note=window.prompt('What happened?');if(!note)return;
-                          const dueDate=new Date(Date.now()+864e5).toISOString().split('T')[0];
                           await deleteLead(lead.id);
                           // No Account gets created here — a cold call being
                           // contacted isn't a customer yet. Contact info rides
                           // on the deal itself; an Account only gets created
-                          // once this prospect is actually Closed Won.
-                          const dealRef=await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',activities:[{text:note,time:nowLabel()}]});
-                          await addFollowup({accountId:null,dealId:dealRef.id,account:lead.company,contact:lead.contact||'',email:lead.email||'',dueDate,rep:repName,notes:note,done:false});
+                          // once this prospect is actually Closed Won. No
+                          // follow-up is auto-scheduled either — reps set
+                          // those manually now via "🔔 Set follow-up" on the
+                          // prospect detail panel.
+                          await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',activities:[{text:note,time:nowLabel()}]});
                           showToast('Lead moved to Contact Made!');
                         }}>📞 Contacted</button>
                       </div>
@@ -709,6 +712,7 @@ export default function CRM(){
             {selId&&view==='pipeline'&&(
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openDealModal(selId)}>✏️ Edit prospect</button>
+                <button style={{...S.btnFu,padding:'4px 10px',fontSize:11}} onClick={()=>openFollowupModal(null,null,selId)}>🔔 Set follow-up</button>
                 <button style={{...S.btnPrimary,padding:'4px 10px',fontSize:11,background:'#3B6D11',borderColor:'#3B6D11'}} onClick={()=>handleCloseWon(selId)}>🎉 Closed Won</button>
               </>
             )}
@@ -950,12 +954,16 @@ export default function CRM(){
 
       {modal?.type==='followup'&&(
         <Modal title={modal.id?'Edit follow-up':'New follow-up'} onClose={()=>setModal(null)} onSave={saveFollowup} showDelete={!!modal.id} onDelete={handleDeleteFollowup}>
-          <FRow label="Account">
-            <select style={S.input} value={ff.accountId||''} onChange={e=>setFf({...ff,accountId:e.target.value})}>
-              <option value="">Select account</option>
-              {myAccounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
-          </FRow>
+          {ff.dealId?(
+            <FRow label="Prospect"><div style={{fontSize:15,fontWeight:600,padding:'4px 0'}}>{ff.account}</div></FRow>
+          ):(
+            <FRow label="Account">
+              <select style={S.input} value={ff.accountId||''} onChange={e=>setFf({...ff,accountId:e.target.value})}>
+                <option value="">Select account</option>
+                {myAccounts.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </FRow>
+          )}
           <FRow label="Due date *"><input style={S.input} type="date" value={ff.dueDate||''} onChange={e=>setFf({...ff,dueDate:e.target.value})}/></FRow>
           <FRow label="Contact name"><input style={S.input} value={ff.contact||''} onChange={e=>setFf({...ff,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={ff.email||''} onChange={e=>setFf({...ff,email:e.target.value})} placeholder="john@company.com"/></FRow>
