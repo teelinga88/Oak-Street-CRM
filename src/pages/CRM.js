@@ -196,6 +196,11 @@ export default function CRM(){
     Object.values(TEAM_ROSTER).forEach(r=>{map[r.name]=accounts.filter(a=>a.rep===r.name).reduce((s,a)=>s+(a.shipmentsThisMonth||0),0);});
     return map;
   },[accounts]);
+  const marginPerRep=useMemo(()=>{
+    const map={};
+    Object.values(TEAM_ROSTER).forEach(r=>{map[r.name]=accounts.filter(a=>a.rep===r.name).reduce((s,a)=>s+(a.marginThisMonth||0),0);});
+    return map;
+  },[accounts]);
   const myShipmentsThisMonth=useMemo(()=>myAccounts.reduce((s,a)=>s+(a.shipmentsThisMonth||0),0),[myAccounts]);
   const myMarginThisMonth=useMemo(()=>myAccounts.reduce((s,a)=>s+(a.marginThisMonth||0),0),[myAccounts]);
   const atRiskCount=useMemo(()=>myAccounts.filter(a=>isAtRisk(a)).length,[myAccounts]);
@@ -664,6 +669,24 @@ export default function CRM(){
                 </div>
               </div>
               <div style={{marginBottom:20}}>
+                <div style={{fontWeight:500,marginBottom:10}}>Margin this month</div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+                  {Object.entries(TEAM_ROSTER).map(([email,rep])=>{
+                    const margin=marginPerRep[rep.name]||0;
+                    return(
+                      <div key={email} style={{...S.card,background:'#EAF3DE',border:'0.5px solid #C3DDA0'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                          <div style={{width:20,height:20,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:600,background:rep.color[0],color:rep.color[1],flexShrink:0}}>{rep.initials}</div>
+                          <div style={{fontSize:11,color:'#3B6D11',fontWeight:500}}>{rep.name.split(' ')[0]}</div>
+                        </div>
+                        <div style={{fontSize:22,fontWeight:600,color:'#3B6D11'}}>{fmtMoney(margin)}</div>
+                        <div style={{fontSize:10,color:'#3B6D11',opacity:.7,marginTop:2}}>margin</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div style={{marginBottom:20}}>
                 <div style={{fontWeight:500,marginBottom:10}}>Rep performance</div>
                 <div style={{border:'0.5px solid #E5E4DF',borderRadius:10,overflow:'hidden'}}>
                   {Object.entries(TEAM_ROSTER).map(([email,rep],i)=>{
@@ -673,7 +696,7 @@ export default function CRM(){
                     const isSelected=mgrSel?.type==='rep'&&mgrSel?.value===email;
                     return(
                       <div key={email} onClick={()=>setMgrSel({type:'rep',value:email})}
-                        style={{display:'grid',gridTemplateColumns:'140px 1fr 60px 60px 60px 60px',gap:8,alignItems:'center',padding:'10px 12px',borderBottom:i<Object.keys(TEAM_ROSTER).length-1?'0.5px solid #E5E4DF':'none',cursor:'pointer',background:isSelected?'#F7F6F3':'#fff'}}>
+                        style={{display:'grid',gridTemplateColumns:'140px 1fr 60px 60px 60px 60px 80px',gap:8,alignItems:'center',padding:'10px 12px',borderBottom:i<Object.keys(TEAM_ROSTER).length-1?'0.5px solid #E5E4DF':'none',cursor:'pointer',background:isSelected?'#F7F6F3':'#fff'}}>
                         <div style={{display:'flex',alignItems:'center',gap:8}}>
                           <div style={{width:24,height:24,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:600,background:rep.color[0],color:rep.color[1],flexShrink:0}}>{rep.initials}</div>
                           <div><div style={{fontSize:12,fontWeight:500}}>{rep.name.split(' ')[0]}</div>{rep.isManager&&<div style={{fontSize:10,color:'#aaa'}}>Mgr</div>}</div>
@@ -683,6 +706,7 @@ export default function CRM(){
                         <div style={{textAlign:'center',fontSize:13,fontWeight:500}}>{repDeals.filter(d=>d.stage==='Contact Made').length}</div>
                         <div style={{textAlign:'center',fontSize:13,fontWeight:600,color:'#3B6D11'}}>{repAccts.filter(a=>a.wonAt&&isThisMonth(a.wonAt)).length}</div>
                         <div style={{textAlign:'center',fontSize:13}}>{repFu.length} F/U</div>
+                        <div style={{textAlign:'right',fontSize:12,fontWeight:600,color:'#3B6D11'}}>{fmtMoney(marginPerRep[rep.name]||0)}</div>
                       </div>
                     );
                   })}
@@ -840,7 +864,7 @@ export default function CRM(){
                     <div style={{width:36,height:36,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,background:rep.color[0],color:rep.color[1]}}>{rep.initials}</div>
                     <div><div style={{fontSize:14,fontWeight:600}}>{rep.name}</div><div style={{fontSize:11,color:'#888'}}>{rep.isManager?'Rep & Manager':'Sales Rep'}</div></div>
                   </div>
-                  <DetailSection title="Shipments this month"><DetailRow k="Total" v={shipmentsPerRep[rep.name]||0}/></DetailSection>
+                  <DetailSection title="Shipments this month"><DetailRow k="Total" v={shipmentsPerRep[rep.name]||0}/><DetailRow k="Margin" v={fmtMoney(marginPerRep[rep.name]||0)}/></DetailSection>
                   <DetailSection title="Accounts">
                     <DetailRow k="Total" v={repAccts.length}/>
                     <DetailRow k="Active" v={repAccts.filter(a=>a.status==='Active').length}/>
