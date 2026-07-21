@@ -11,6 +11,7 @@ const fmtDate = d => { if(!d) return '—'; return new Date(d+'T12:00:00').toLoc
 const daysAgo = iso => { if(!iso) return '—'; const d=Math.floor((Date.now()-new Date(iso))/(864e5)); if(d===0)return'Today'; if(d===1)return'Yesterday'; if(d<7)return d+' days ago'; return Math.floor(d/7)+' wks ago'; };
 const daysSince = iso => { if(!iso) return null; return Math.floor((Date.now()-new Date(iso))/(864e5)); };
 const isThisMonth = iso => { if(!iso) return false; const d=new Date(iso); const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth(); };
+const fmtMoney = n => { const v=Number(n)||0; return v<0 ? '-$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}) : '$'+v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); };
 const isAtRisk = a => { const d = daysSince(a.lastShipmentDate); return d === null ? false : d >= 60; };
 
 function getMonthKey(offset=0) {
@@ -196,6 +197,7 @@ export default function CRM(){
     return map;
   },[accounts]);
   const myShipmentsThisMonth=useMemo(()=>myAccounts.reduce((s,a)=>s+(a.shipmentsThisMonth||0),0),[myAccounts]);
+  const myMarginThisMonth=useMemo(()=>myAccounts.reduce((s,a)=>s+(a.marginThisMonth||0),0),[myAccounts]);
   const atRiskCount=useMemo(()=>myAccounts.filter(a=>isAtRisk(a)).length,[myAccounts]);
 
   const[af,setAf]=useState({});
@@ -388,12 +390,13 @@ export default function CRM(){
               </div>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:16}}>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:16}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
                 {[
                   {label:'My accounts',value:myAccounts.length},
                   {label:'Active',value:myAccounts.filter(a=>a.status==='Active').length,sub:myAccounts.length?Math.round(myAccounts.filter(a=>a.status==='Active').length/myAccounts.length*100)+'%':'0%'},
                   {label:'At-risk',value:atRiskCount,warn:atRiskCount>0,clickable:true,active:atRiskOnly,onClick:()=>setAtRiskOnly(v=>!v),hint:' (click to filter)',activeHint:' — click to clear'},
                   {label:'Shipments this month',value:myShipmentsThisMonth,highlight:true},
+                  {label:'Margin this month',value:fmtMoney(myMarginThisMonth),highlight:true},
                 ].map((m,i)=>(
                   <div key={i} onClick={m.onClick} style={{...S.card,...(m.highlight?{background:'#E6F1FB',border:'0.5px solid #A8C8F0'}:{}),...(m.clickable?{cursor:'pointer'}:{}),...(m.active&&m.label==='At-risk'?{background:'#FCEBEB',border:'0.5px solid #F09595'}:{}),...(m.active&&m.label!=='At-risk'?{border:'0.5px solid #0C447C'}:{})}}>
                     <div style={{fontSize:11,color:m.highlight?'#0C447C':'#888',marginBottom:4}}>{m.label}{m.active?m.activeHint:m.clickable?m.hint:''}</div>
@@ -415,15 +418,16 @@ export default function CRM(){
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,tableLayout:'fixed'}}>
                   <thead>
                     <tr style={{background:'#F7F6F3'}}>
-                      <th style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:'#888',width:'42%',borderBottom:'0.5px solid #E5E4DF'}}>Account</th>
-                      <th style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:'#888',width:'18%',borderBottom:'0.5px solid #E5E4DF'}}>Status</th>
-                      <th style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:'#888',width:'14%',borderBottom:'0.5px solid #E5E4DF'}}>Trending</th>
-                      <th onClick={()=>setDaysSortDir(d=>d==='asc'?'desc':'asc')} style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:atRiskOnly?'#0C447C':'#888',width:'26%',borderBottom:'0.5px solid #E5E4DF',cursor:'pointer',userSelect:'none'}} title={atRiskOnly?'Click to sort by days since last shipment':'Filter to At-risk to sort by days'}>Shipments this month{atRiskOnly?(daysSortDir==='asc'?' ↑':daysSortDir==='desc'?' ↓':' ↕'):''}</th>
+                      <th style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:'#888',width:'34%',borderBottom:'0.5px solid #E5E4DF'}}>Account</th>
+                      <th style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:'#888',width:'15%',borderBottom:'0.5px solid #E5E4DF'}}>Status</th>
+                      <th style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:'#888',width:'12%',borderBottom:'0.5px solid #E5E4DF'}}>Trending</th>
+                      <th onClick={()=>setDaysSortDir(d=>d==='asc'?'desc':'asc')} style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:atRiskOnly?'#0C447C':'#888',width:'22%',borderBottom:'0.5px solid #E5E4DF',cursor:'pointer',userSelect:'none'}} title={atRiskOnly?'Click to sort by days since last shipment':'Filter to At-risk to sort by days'}>Shipments this month{atRiskOnly?(daysSortDir==='asc'?' ↑':daysSortDir==='desc'?' ↓':' ↕'):''}</th>
+                      <th style={{padding:'8px 12px',textAlign:'left',fontWeight:500,fontSize:11,color:'#888',width:'17%',borderBottom:'0.5px solid #E5E4DF'}}>Margin this month</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAccounts.length===0?(
-                      <tr><td colSpan={4} style={{textAlign:'center',padding:30,color:'#888'}}>No accounts found</td></tr>
+                      <tr><td colSpan={5} style={{textAlign:'center',padding:30,color:'#888'}}>No accounts found</td></tr>
                     ):filteredAccounts.map(a=>{
                       const[bg,fg]=acctColor(a.name);
                       const shipCount=a.shipmentsThisMonth||0;
@@ -452,6 +456,10 @@ export default function CRM(){
                           <td style={{padding:'10px 12px'}}>
                             {atRisk?<span style={{fontSize:11,color:'#A32D2D',fontWeight:500}}>⚠ {daysSince(a.lastShipmentDate)}d ago</span>
                             :shipCount>0?<span style={{fontSize:13,fontWeight:600,color:'#0C447C'}}>{shipCount}</span>
+                            :<span style={{fontSize:11,color:'#aaa'}}>—</span>}
+                          </td>
+                          <td style={{padding:'10px 12px'}}>
+                            {a.marginThisMonth?<span style={{fontSize:13,fontWeight:600,color:'#3B6D11'}}>{fmtMoney(a.marginThisMonth)}</span>
                             :<span style={{fontSize:11,color:'#aaa'}}>—</span>}
                           </td>
                         </tr>
