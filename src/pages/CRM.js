@@ -796,7 +796,10 @@ export default function CRM(){
                   {a.contact&&<DetailRow k="Contact" v={a.contact}/>}
                   {a.email&&<DetailRow k="Email" v={<a href={`mailto:${a.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a.email}</a>}/>}
                   {a.phone&&<DetailRow k="Phone" v={a.phone}/>}
-                  {!a.contact&&!a.email&&!a.phone&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info yet — click Edit</div>}
+                  {a.address&&<DetailRow k="Address" v={a.address}/>}
+                  {a.location&&<DetailRow k="Location" v={a.location}/>}
+                  {a.zip&&<DetailRow k="Zip" v={a.zip}/>}
+                  {!a.contact&&!a.email&&!a.phone&&!a.address&&!a.location&&!a.zip&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info yet — click Edit</div>}
                 </DetailSection>
                 {(a.shipmentType||a.commodity)&&<DetailSection title="Shipment info">
                   {a.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
@@ -915,10 +918,12 @@ export default function CRM(){
             <FRow label="Company name *"><input style={S.input} value={af.name||''} onChange={e=>setAf({...af,name:e.target.value})} placeholder="Company Name"/></FRow>
             <FRow label="Industry"><input style={S.input} value={af.industry||''} onChange={e=>setAf({...af,industry:e.target.value})} placeholder="Manufacturing"/></FRow>
           </FGrid>
+          <FRow label="Address"><input style={S.input} value={af.address||''} onChange={e=>setAf({...af,address:e.target.value})} placeholder="123 Main St"/></FRow>
           <FGrid>
             <FRow label="City, State"><input style={S.input} value={af.location||''} onChange={e=>setAf({...af,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
-            <FRow label="Status"><select style={S.input} value={af.status||'Active'} onChange={e=>setAf({...af,status:e.target.value})}>{ACCT_STATUSES.map(s=><option key={s}>{s}</option>)}</select></FRow>
+            <FRow label="Zip"><input style={S.input} value={af.zip||''} onChange={e=>setAf({...af,zip:e.target.value})} placeholder="60601"/></FRow>
           </FGrid>
+          <FRow label="Status"><select style={S.input} value={af.status||'Active'} onChange={e=>setAf({...af,status:e.target.value})}>{ACCT_STATUSES.map(s=><option key={s}>{s}</option>)}</select></FRow>
           <FRow label="Primary contact"><input style={S.input} value={af.contact||''} onChange={e=>setAf({...af,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={af.email||''} onChange={e=>setAf({...af,email:e.target.value})} placeholder="john@company.com"/></FRow>
           <FRow label="Phone"><input style={S.input} value={af.phone||''} onChange={e=>setAf({...af,phone:e.target.value})} placeholder="(555) 000-0000"/></FRow>
