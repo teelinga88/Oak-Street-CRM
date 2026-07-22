@@ -303,7 +303,8 @@ export default function CRM(){
     const f=id?followups.find(x=>x.id===id):null;
     const tomorrow=new Date(Date.now()+864e5).toISOString().split('T')[0];
     const deal=prefillDealId?deals.find(x=>x.id===prefillDealId):null;
-    setFf(f?{...f}:{accountId:prefillAccountId||'',dealId:prefillDealId||'',account:deal?.account||'',dueDate:tomorrow,contact:deal?.contact||'',email:deal?.email||'',notes:''});
+    const acct=prefillAccountId?accounts.find(x=>x.id===prefillAccountId):null;
+    setFf(f?{...f}:{accountId:prefillAccountId||'',dealId:prefillDealId||'',account:deal?.account||acct?.name||'',dueDate:tomorrow,contact:deal?.contact||acct?.contact||'',email:deal?.email||acct?.email||'',phone:deal?.phone||acct?.phone||'',notes:''});
     setModal({type:'followup',id});
   }
   async function saveFollowup(){
@@ -612,14 +613,21 @@ export default function CRM(){
                 const dueToday=myFollowups.filter(f=>!f.done&&f.dueDate===today());
                 const upcoming=myFollowups.filter(f=>!f.done&&f.dueDate>today());
                 const done=myFollowups.filter(f=>f.done&&f.completedAt===today());
-                const FuCard=({f})=>(
+                const FuCard=({f})=>{
+                  const linkedAcct=f.accountId?accounts.find(a=>a.id===f.accountId):null;
+                  const linkedDeal=f.dealId?deals.find(d=>d.id===f.dealId):null;
+                  const fuContact=linkedAcct?.contact||linkedDeal?.contact||f.contact;
+                  const fuEmail=linkedAcct?.email||linkedDeal?.email||f.email;
+                  const fuPhone=linkedAcct?.phone||linkedDeal?.phone||f.phone;
+                  return(
                   <div style={{border:'0.5px solid #E5E4DF',borderRadius:10,padding:12,marginBottom:8,background:'#fff'}}>
                     <div style={{display:'flex',gap:10}}>
                       <input type="checkbox" checked={f.done} onChange={async e=>{await updateFollowup(f.id,{done:e.target.checked,completedAt:e.target.checked?today():null});}} style={{flexShrink:0,width:15,height:15,cursor:'pointer',marginTop:2}}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:600,textDecoration:f.done?'line-through':'none',color:f.done?'#aaa':'#1a1a1a'}}>{f.account}</div>
-                        {f.contact&&<div style={{fontSize:11,color:'#888',marginTop:1}}>{f.contact}</div>}
-                        {f.email&&<div style={{fontSize:11,color:'#0C447C',marginTop:1}}>{f.email}</div>}
+                        {fuContact&&<div style={{fontSize:11,color:'#888',marginTop:1}}>{fuContact}</div>}
+                        {fuPhone&&<div style={{fontSize:11,color:'#888',marginTop:1}}>{fuPhone}</div>}
+                        {fuEmail&&<div style={{fontSize:11,color:'#0C447C',marginTop:1}}>{fuEmail}</div>}
                         {f.notes&&<div style={{fontSize:11,color:'#aaa',marginTop:3,fontStyle:'italic'}}>"{f.notes}"</div>}
                         <div style={{fontSize:11,color:!f.done&&f.dueDate<today()?'#A32D2D':'#888',marginTop:4,fontWeight:!f.done&&f.dueDate<today()?600:400}}>
                           {!f.done&&f.dueDate<today()?'⚠ Overdue · ':''}{fmtDate(f.dueDate)}
@@ -628,7 +636,8 @@ export default function CRM(){
                     </div>
                     {!f.done&&(f.accountId||f.dealId)&&<div style={{marginTop:8}}><button style={{...S.btnLog,width:'100%',justifyContent:'center',fontSize:11}} onClick={()=>openLogModal(f.accountId,f.id,f.dealId)}>✏️ Log what happened</button></div>}
                   </div>
-                );
+                  );
+                };
                 return(
                   <>
                     {overdue.length>0&&<><div style={{fontWeight:500,color:'#A32D2D',marginBottom:10}}>⚠ Overdue ({overdue.length})</div>{overdue.map(f=><FuCard key={f.id} f={f}/>)}</>}
@@ -1004,6 +1013,7 @@ export default function CRM(){
           <FRow label="Due date *"><input style={S.input} type="date" value={ff.dueDate||''} onChange={e=>setFf({...ff,dueDate:e.target.value})}/></FRow>
           <FRow label="Contact name"><input style={S.input} value={ff.contact||''} onChange={e=>setFf({...ff,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={ff.email||''} onChange={e=>setFf({...ff,email:e.target.value})} placeholder="john@company.com"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={ff.phone||''} onChange={e=>setFf({...ff,phone:e.target.value})} placeholder="555-000-0000"/></FRow>
           <FRow label="Notes"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={ff.notes||''} onChange={e=>setFf({...ff,notes:e.target.value})} placeholder="What to follow up about…"/></FRow>
         </Modal>
       )}
