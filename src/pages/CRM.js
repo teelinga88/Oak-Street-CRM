@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth, TEAM_ROSTER } from '../context/AuthContext';
-import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, useCelebrations, addCelebration } from '../hooks/useData';
+import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, useCelebrations, addCelebration, useLeadCriteria } from '../hooks/useData';
 
 const ACCT_COLORS=[['#E6F1FB','#0C447C'],['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#EEEDFE','#3C3489'],['#FAECE7','#712B13'],['#FBEAF0','#72243E'],['#F0FFF4','#276749'],['#FFF5F5','#C53030'],['#FFFFF0','#744210'],['#E9F0FF','#2B4ECF']];
 const acctColor = n => ACCT_COLORS[(n.charCodeAt(0)+(n.charCodeAt(1)||0))%ACCT_COLORS.length];
@@ -136,13 +136,15 @@ function Fireworks(){
 }
 
 export default function CRM(){
-  const{repProfile,logout}=useAuth();
+  const{repProfile,currentUser,logout}=useAuth();
   const isManager=repProfile?.isManager||false;
   const repName=repProfile?.name||'';
+  const repEmail=currentUser?.email||'';
   const{accounts,addAccount,updateAccount,deleteAccount}=useAccounts(repName,isManager);
   const{deals,addDeal,updateDeal,deleteDeal}=useDeals(repName,isManager);
   const{followups,addFollowup,updateFollowup,deleteFollowup}=useFollowups(repName,isManager);
   const{leads,addLead,updateLead,deleteLead}=useBucket(repName);
+  const{criteria:leadCriteria,saveLeadCriteria}=useLeadCriteria(repEmail);
   const[view,setView]=useState('accounts');
   const[selId,setSelId]=useState(null);
   const[modal,setModal]=useState(null);
@@ -344,6 +346,12 @@ export default function CRM(){
     await addLead({...bucketForm,rep:repName});setModal(null);showToast('Lead added!');
   }
 
+  const[lcForm,setLcForm]=useState({});
+  function openLeadCriteriaModal(){setLcForm(leadCriteria||{});setModal({type:'leadCriteria'});}
+  async function saveLeadCriteriaForm(){
+    await saveLeadCriteria(lcForm);setModal(null);showToast('Lead criteria saved!');
+  }
+
   const navItems=[
     {id:'accounts',label:'My Accounts',icon:'👥'},
     {id:'pipeline',label:'My Pipeline',icon:'📊'},
@@ -543,6 +551,7 @@ export default function CRM(){
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{repProfile?.name.split(' ')[0]}'s Cold Call Bucket</h2>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:12,color:'#888'}}>{leads.length} / {BUCKET_CAP}</span>
+                <button style={S.btn} onClick={openLeadCriteriaModal}>⚙️ My lead criteria</button>
                 <button style={S.btnPrimary} onClick={openBucketForm}>+ Add lead</button>
               </div>
             </div>
@@ -1032,6 +1041,38 @@ export default function CRM(){
           <FRow label="Email"><input style={S.input} type="email" value={bucketForm.email||''} onChange={e=>setBucketForm({...bucketForm,email:e.target.value})} placeholder="john@company.com"/></FRow>
           <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:e.target.value})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Location"><input style={S.input} value={bucketForm.location||''} onChange={e=>setBucketForm({...bucketForm,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
+        </Modal>
+      )}
+
+      {modal?.type==='leadCriteria'&&(
+        <Modal title="My Lead Criteria" sub="Used every Monday to refill your Cold Call Bucket back to 100 via ZoomInfo" onClose={()=>setModal(null)} onSave={saveLeadCriteriaForm} saveLabel="Save criteria">
+          <FRow label="Industry keywords">
+            <input style={S.input} value={lcForm.industryKeywords||''} onChange={e=>setLcForm({...lcForm,industryKeywords:e.target.value})} placeholder="manufacturing OR construction OR retail"/>
+            <div style={{fontSize:11,color:'#aaa',marginTop:4}}>Separate multiple industries with OR.</div>
+          </FRow>
+          <FGrid>
+            <FRow label="State(s)"><input style={S.input} value={lcForm.state||''} onChange={e=>setLcForm({...lcForm,state:e.target.value})} placeholder="TX, OK, AR"/></FRow>
+            <FRow label="Zip code"><input style={S.input} value={lcForm.zipCode||''} onChange={e=>setLcForm({...lcForm,zipCode:e.target.value})} placeholder="75201"/></FRow>
+          </FGrid>
+          <FRow label="Radius around zip">
+            <select style={S.input} value={lcForm.zipRadius||''} onChange={e=>setLcForm({...lcForm,zipRadius:e.target.value})}>
+              <option value="">No radius (state only)</option>
+              <option value="10">10 miles</option>
+              <option value="25">25 miles</option>
+              <option value="50">50 miles</option>
+              <option value="100">100 miles</option>
+              <option value="250">250 miles</option>
+            </select>
+            <div style={{fontSize:11,color:'#aaa',marginTop:4}}>Only used if a zip code is set above; otherwise state(s) apply.</div>
+          </FRow>
+          <FGrid>
+            <FRow label="Min employees"><input style={S.input} type="number" value={lcForm.employeeMin||''} onChange={e=>setLcForm({...lcForm,employeeMin:e.target.value})} placeholder="10"/></FRow>
+            <FRow label="Max employees"><input style={S.input} type="number" value={lcForm.employeeMax||''} onChange={e=>setLcForm({...lcForm,employeeMax:e.target.value})} placeholder="500"/></FRow>
+          </FGrid>
+          <FRow label="Target job title(s)">
+            <input style={S.input} value={lcForm.jobTitles||''} onChange={e=>setLcForm({...lcForm,jobTitles:e.target.value})} placeholder="Logistics Manager, Supply Chain Director, Operations Manager"/>
+            <div style={{fontSize:11,color:'#aaa',marginTop:4}}>Comma-separated — any contact matching one of these titles qualifies.</div>
+          </FRow>
         </Modal>
       )}
 
