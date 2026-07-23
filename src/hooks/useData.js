@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   collection, query, where, onSnapshot, addDoc, updateDoc,
-  deleteDoc, doc, serverTimestamp, orderBy, limit
+  deleteDoc, doc, serverTimestamp, orderBy, limit, setDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -202,4 +202,31 @@ export async function addCelebration(data) {
     ...data,
     createdAt: serverTimestamp(),
   });
+}
+
+// ── Lead Criteria (ZoomInfo cold-call sourcing) ────────────────────────────
+// One doc per rep, keyed by their email (matches TEAM_ROSTER keys), storing
+// the search criteria used by the weekly ZoomInfo bucket-refill Cloud
+// Function. Reps set/edit this themselves from the Cold Call Bucket view.
+export function useLeadCriteria(repEmail) {
+  const [criteria, setCriteria] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!repEmail) { setLoading(false); return; }
+    const ref = doc(db, 'leadCriteria', repEmail.toLowerCase());
+    const unsub = onSnapshot(ref, snap => {
+      setCriteria(snap.exists() ? snap.data() : null);
+      setLoading(false);
+    });
+    return unsub;
+  }, [repEmail]);
+
+  async function saveLeadCriteria(data) {
+    if (!repEmail) return;
+    const ref = doc(db, 'leadCriteria', repEmail.toLowerCase());
+    return setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+  }
+
+  return { criteria, loading, saveLeadCriteria };
 }
