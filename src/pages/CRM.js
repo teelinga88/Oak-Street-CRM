@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth, TEAM_ROSTER } from '../context/AuthContext';
-import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, useCelebrations, addCelebration, useLeadCriteria } from '../hooks/useData';
+import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, useCelebrations, addCelebration, useLeadCriteria, requestBucketRefill } from '../hooks/useData';
 
 const ACCT_COLORS=[['#E6F1FB','#0C447C'],['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#EEEDFE','#3C3489'],['#FAECE7','#712B13'],['#FBEAF0','#72243E'],['#F0FFF4','#276749'],['#FFF5F5','#C53030'],['#FFFFF0','#744210'],['#E9F0FF','#2B4ECF']];
 const acctColor = n => ACCT_COLORS[(n.charCodeAt(0)+(n.charCodeAt(1)||0))%ACCT_COLORS.length];
@@ -34,7 +34,7 @@ const SCOLS={'New Lead':['#F1EFE8','#5F5E5A'],'Attempted':['#FDF0D9','#8A5A12'],
 const SOURCES=['Cold Call','Referral','Network Lead'];
 const LOST_REASONS=['Price too high','Went with competitor','No volume available','No response','Other'];
 const ACT_TYPES=['Call','Email','Meeting','Note','Other'];
-const BUCKET_CAP=100;
+const BUCKET_CAP=50;
 const ACCT_STATUSES=['Active','At risk','Inactive'];
 const badgeStyle=s=>({Active:{background:'#EAF3DE',color:'#3B6D11'},['At risk']:{background:'#FCEBEB',color:'#A32D2D'},Inactive:{background:'#F1EFE8',color:'#5F5E5A'}}[s]||{background:'#eee',color:'#666'});
 const srcStyle=s=>({'Cold Call':{background:'#EEF2FF',color:'#3730A3'},Referral:{background:'#EAF3DE',color:'#3B6D11'},'Network Lead':{background:'#FAEEDA',color:'#633806'}}[s]||{background:'#eee',color:'#666'});
@@ -352,6 +352,19 @@ export default function CRM(){
     await saveLeadCriteria(lcForm);setModal(null);showToast('Lead criteria saved!');
   }
 
+  const[refillingBucket,setRefillingBucket]=useState(false);
+  async function handleRefillBucket(){
+    setRefillingBucket(true);
+    try{
+      const{added}=await requestBucketRefill();
+      showToast(added>0?`Added ${added} new lead${added===1?'':'s'} to your bucket!`:'No matching leads found for your saved criteria.');
+    }catch(err){
+      showToast(err.message||'Could not refill bucket — try again.');
+    }finally{
+      setRefillingBucket(false);
+    }
+  }
+
   const navItems=[
     {id:'accounts',label:'My Accounts',icon:'👥'},
     {id:'pipeline',label:'My Pipeline',icon:'📊'},
@@ -552,6 +565,11 @@ export default function CRM(){
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:12,color:'#888'}}>{leads.length} / {BUCKET_CAP}</span>
                 <button style={S.btn} onClick={openLeadCriteriaModal}>⚙️ My lead criteria</button>
+                {leads.length===0&&(
+                  <button style={S.btn} onClick={handleRefillBucket} disabled={refillingBucket} title="Only available when your bucket is completely empty — otherwise it refills automatically every Monday at 6am">
+                    {refillingBucket?'Refilling…':'🔄 Refill bucket now'}
+                  </button>
+                )}
                 <button style={S.btnPrimary} onClick={openBucketForm}>+ Add lead</button>
               </div>
             </div>
