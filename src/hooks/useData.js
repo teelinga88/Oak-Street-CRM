@@ -3,7 +3,8 @@ import {
   collection, query, where, onSnapshot, addDoc, updateDoc,
   deleteDoc, doc, serverTimestamp, orderBy, limit, setDoc
 } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db, functions } from '../firebase/config';
+import { httpsCallable } from 'firebase/functions';
 
 // ── Accounts ──────────────────────────────────────────────────────────────
 export function useAccounts(repName, isManager = false) {
@@ -229,4 +230,17 @@ export function useLeadCriteria(repEmail) {
   }
 
   return { criteria, loading, saveLeadCriteria };
+}
+
+// ── On-demand Cold Call Bucket refill ──────────────────────────────────────
+// Calls the requestBucketRefill Cloud Function. That function enforces
+// server-side that the rep's bucket is completely empty (0 leads) before
+// pulling anything from ZoomInfo — a rep with leads still in their bucket,
+// even just a few, gets a rejected/thrown error and must wait for the
+// normal Monday 6am auto-refill instead. Returns { added } on success, or
+// throws (err.message holds the human-readable reason) on failure.
+export async function requestBucketRefill() {
+  const callable = httpsCallable(functions, 'requestBucketRefill');
+  const result = await callable();
+  return result.data;
 }
