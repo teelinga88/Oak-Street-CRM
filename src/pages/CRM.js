@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth, TEAM_ROSTER } from '../context/AuthContext';
-import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, useCelebrations, addCelebration, useLeadCriteria, requestBucketRefill } from '../hooks/useData';
+import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, useCelebrations, addCelebration, useLeadCriteria, requestBucketRefill, getZoomInfoIndustries } from '../hooks/useData';
 
 const ACCT_COLORS=[['#E6F1FB','#0C447C'],['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#EEEDFE','#3C3489'],['#FAECE7','#712B13'],['#FBEAF0','#72243E'],['#F0FFF4','#276749'],['#FFF5F5','#C53030'],['#FFFFF0','#744210'],['#E9F0FF','#2B4ECF']];
 const acctColor = n => ACCT_COLORS[(n.charCodeAt(0)+(n.charCodeAt(1)||0))%ACCT_COLORS.length];
@@ -66,6 +66,78 @@ function Modal({title,sub,onClose,onSave,saveLabel='Save',showDelete=false,onDel
   );
 }
 function FRow({label,children}){return <div style={{marginBottom:12}}><label style={S.label}>{label}</label>{children}</div>;}
+
+function IndustryPicker({value,onChange,options}){
+  // value: array of selected industry name strings. options: [{id,name}] from ZoomInfo.
+  const[text,setText]=useState('');
+  const[open,setOpen]=useState(false);
+  const wrapRef=useRef(null);
+  useEffect(()=>{
+    function onDocClick(e){ if(wrapRef.current&&!wrapRef.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown',onDocClick);
+    return ()=>document.removeEventListener('mousedown',onDocClick);
+  },[]);
+  const selected=value||[];
+  const q=text.trim().toLowerCase();
+  const filtered=(options||[]).filter(o=>!selected.includes(o.name)&&(!q||o.name.toLowerCase().includes(q))).slice(0,40);
+  function addIndustry(name){
+    if(!name||selected.includes(name)) return;
+    onChange([...selected,name]);
+    setText('');
+  }
+  function removeIndustry(name){
+    onChange(selected.filter(n=>n!==name));
+  }
+  function onKeyDown(e){
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(filtered.length>0) addIndustry(filtered[0].name);
+      else if(text.trim()) addIndustry(text.trim());
+    } else if(e.key==='Backspace'&&!text&&selected.length){
+      removeIndustry(selected[selected.length-1]);
+    } else if(e.key==='Escape'){
+      setOpen(false);
+    }
+  }
+  return(
+    <div ref={wrapRef} style={{position:'relative'}}>
+      <div style={{...S.input,display:'flex',flexWrap:'wrap',gap:6,minHeight:34,alignItems:'center',padding:'6px 8px'}} onClick={()=>setOpen(true)}>
+        {selected.map(name=>(
+          <span key={name} style={{background:'#EEF2FF',color:'#3730A3',borderRadius:6,padding:'2px 6px',fontSize:12,display:'flex',alignItems:'center',gap:4}}>
+            {name}
+            <span style={{cursor:'pointer',fontWeight:700}} onClick={(e)=>{e.stopPropagation();removeIndustry(name);}}>×</span>
+          </span>
+        ))}
+        <input
+          style={{border:'none',outline:'none',fontSize:13,fontFamily:'inherit',flex:1,minWidth:100,background:'transparent'}}
+          value={text}
+          onFocus={()=>setOpen(true)}
+          onChange={e=>{setText(e.target.value);setOpen(true);}}
+          onKeyDown={onKeyDown}
+          placeholder={selected.length?'':'Start typing an industry…'}
+        />
+      </div>
+      {open&&(
+        <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'#fff',border:'0.5px solid #D5D4CF',borderRadius:8,maxHeight:220,overflowY:'auto',zIndex:50,boxShadow:'0 4px 12px rgba(0,0,0,0.08)'}}>
+          {options===null&&<div style={{padding:'8px 10px',fontSize:12,color:'#888'}}>Loading industries…</div>}
+          {options!==null&&filtered.length===0&&(
+            <div style={{padding:'8px 10px',fontSize:12,color:'#888'}}>
+              {q?`No match — press Enter to add "${text.trim()}" as-is.`:'No more industries to add.'}
+            </div>
+          )}
+          {options!==null&&filtered.map(o=>(
+            <div key={o.id} style={{padding:'7px 10px',fontSize:13,cursor:'pointer'}}
+              onMouseDown={(e)=>{e.preventDefault();addIndustry(o.name);}}
+              onMouseEnter={e=>e.currentTarget.style.background='#F7F6F3'}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+              {o.name}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 function FGrid({children}){return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>{children}</div>;}
 function DetailSection({title,children}){return(<div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:500,color:'#aaa',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:6}}>{title}</div>{children}</div>);}
 function DetailRow({k,v}){return(<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,padding:'4px 0',borderBottom:'0.5px solid #F0EFE8'}}><span style={{color:'#888'}}>{k}</span><span style={{fontWeight:500,textAlign:'right',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v}</span></div>);}
@@ -340,7 +412,7 @@ export default function CRM(){
   }
 
   const[bucketForm,setBucketForm]=useState({});
-  function openBucketForm(){setBucketForm({company:'',contact:'',email:'',phone:'',location:''});setModal({type:'addLead'});}
+  function openBucketForm(){setBucketForm({company:'',contact:'',email:'',phone:'',location:'',address:'',zip:'',industry:'',jobTitle:''});setModal({type:'addLead'});}
   async function saveLead(){
     if(!bucketForm.company?.trim()){showToast('Company name required');return;}
     await addLead({...bucketForm,rep:repName});setModal(null);showToast('Lead added!');
@@ -351,6 +423,18 @@ export default function CRM(){
   async function saveLeadCriteriaForm(){
     await saveLeadCriteria(lcForm);setModal(null);showToast('Lead criteria saved!');
   }
+
+  const[zoomInfoIndustries,setZoomInfoIndustries]=useState(null);
+  useEffect(()=>{
+    if(modal?.type==='leadCriteria'&&zoomInfoIndustries===null){
+      getZoomInfoIndustries().then(setZoomInfoIndustries).catch(()=>setZoomInfoIndustries([]));
+    }
+  },[modal,zoomInfoIndustries]);
+  const industryList=useMemo(()=>{
+    const raw=(lcForm.industryKeywords||'').trim();
+    if(!raw) return [];
+    return raw.split(/\s+OR\s+/i).map(s=>s.trim()).filter(Boolean);
+  },[lcForm.industryKeywords]);
 
   const[refillingBucket,setRefillingBucket]=useState(false);
   async function handleRefillBucket(){
@@ -592,9 +676,11 @@ export default function CRM(){
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                         <div>
                           <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>{lead.company}</div>
-                          <div style={{fontSize:11,color:'#888'}}>{lead.contact||''}</div>
+                          {lead.industry&&<div style={{fontSize:11,color:'#888'}}>{lead.industry}</div>}
+                          <div style={{fontSize:11,color:'#888'}}>{lead.contact||''}{lead.jobTitle?` — ${lead.jobTitle}`:''}</div>
                           {lead.email&&<div style={{fontSize:11,color:'#0C447C'}}>{lead.email}</div>}
                           {lead.phone&&<div style={{fontSize:11,color:'#888'}}>{lead.phone}</div>}
+                          {(lead.address||lead.location||lead.zip)&&<div style={{fontSize:11,color:'#aaa'}}>{[lead.address,lead.location,lead.zip].filter(Boolean).join(', ')}</div>}
                         </div>
                         <span style={{background:'#EEF2FF',color:'#3730A3',borderRadius:20,padding:'2px 8px',fontSize:11,fontWeight:500,flexShrink:0}}>{lead.attempts||0} att.</span>
                       </div>
@@ -614,7 +700,7 @@ export default function CRM(){
                           // follow-up is auto-scheduled either — reps set
                           // those manually now via "🔔 Set follow-up" on the
                           // prospect detail panel.
-                          await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',activities:[{text:note,time:nowLabel()}]});
+                          await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',address:lead.address||'',zip:lead.zip||'',industry:lead.industry||'',jobTitle:lead.jobTitle||'',activities:[{text:note,time:nowLabel()}]});
                           showToast('Lead moved to Contact Made!');
                         }}>📞 Contacted</button>
                       </div>
@@ -1059,14 +1145,18 @@ export default function CRM(){
           <FRow label="Email"><input style={S.input} type="email" value={bucketForm.email||''} onChange={e=>setBucketForm({...bucketForm,email:e.target.value})} placeholder="john@company.com"/></FRow>
           <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:e.target.value})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Location"><input style={S.input} value={bucketForm.location||''} onChange={e=>setBucketForm({...bucketForm,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
+          <FRow label="Address"><input style={S.input} value={bucketForm.address||''} onChange={e=>setBucketForm({...bucketForm,address:e.target.value})} placeholder="123 Main St"/></FRow>
+          <FRow label="Zip"><input style={S.input} value={bucketForm.zip||''} onChange={e=>setBucketForm({...bucketForm,zip:e.target.value})} placeholder="60601"/></FRow>
+          <FRow label="Industry"><input style={S.input} value={bucketForm.industry||''} onChange={e=>setBucketForm({...bucketForm,industry:e.target.value})} placeholder="Manufacturing"/></FRow>
+          <FRow label="Job title"><input style={S.input} value={bucketForm.jobTitle||''} onChange={e=>setBucketForm({...bucketForm,jobTitle:e.target.value})} placeholder="Logistics Manager"/></FRow>
         </Modal>
       )}
 
       {modal?.type==='leadCriteria'&&(
         <Modal title="My Lead Criteria" sub="Used every Monday to refill your Cold Call Bucket back to 100 via ZoomInfo" onClose={()=>setModal(null)} onSave={saveLeadCriteriaForm} saveLabel="Save criteria">
           <FRow label="Industry keywords">
-            <input style={S.input} value={lcForm.industryKeywords||''} onChange={e=>setLcForm({...lcForm,industryKeywords:e.target.value})} placeholder="manufacturing OR construction OR retail"/>
-            <div style={{fontSize:11,color:'#aaa',marginTop:4}}>Separate multiple industries with OR.</div>
+            <IndustryPicker value={industryList} options={zoomInfoIndustries} onChange={arr=>setLcForm({...lcForm,industryKeywords:arr.join(' OR ')})}/>
+            <div style={{fontSize:11,color:'#aaa',marginTop:4}}>Type to search ZoomInfo's industry list, click (or press Enter) to add. Multiple industries are OR'd together.</div>
           </FRow>
           <FGrid>
             <FRow label="State(s)"><input style={S.input} value={lcForm.state||''} onChange={e=>setLcForm({...lcForm,state:e.target.value})} placeholder="TX, OK, AR"/></FRow>
