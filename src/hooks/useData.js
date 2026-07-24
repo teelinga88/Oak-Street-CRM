@@ -244,3 +244,17 @@ export async function requestBucketRefill() {
   const result = await callable();
   return result.data;
 }
+
+// ── ZoomInfo Industry lookup (for the Lead Criteria autocomplete) ─────────
+// Fetches ZoomInfo's real industry taxonomy (~190 industries + sub-industries)
+// via the getZoomInfoLookupValues callable. Cached in module scope so it's
+// only fetched once per page load no matter how many times the modal opens.
+let _zoomInfoIndustriesCache = null;
+export async function getZoomInfoIndustries() {
+  if (_zoomInfoIndustriesCache) return _zoomInfoIndustriesCache;
+  const callable = httpsCallable(functions, 'getZoomInfoLookupValues');
+  const result = await callable({ field: 'industries' });
+  const values = (result.data && result.data.values) || [];
+  _zoomInfoIndustriesCache = values.map(v => ({ id: v.id, name: v.attributes?.name || '' })).filter(v => v.name);
+  return _zoomInfoIndustriesCache;
+}
