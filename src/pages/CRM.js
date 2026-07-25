@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth, TEAM_ROSTER } from '../context/AuthContext';
-import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, useCelebrations, addCelebration, useLeadCriteria, requestBucketRefill, getZoomInfoIndustries } from '../hooks/useData';
+import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, disqualifyBucketLead, useCelebrations, addCelebration, useLeadCriteria, requestBucketRefill, getZoomInfoIndustries } from '../hooks/useData';
 
 const ACCT_COLORS=[['#E6F1FB','#0C447C'],['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#EEEDFE','#3C3489'],['#FAECE7','#712B13'],['#FBEAF0','#72243E'],['#F0FFF4','#276749'],['#FFF5F5','#C53030'],['#FFFFF0','#744210'],['#E9F0FF','#2B4ECF']];
 const acctColor = n => ACCT_COLORS[(n.charCodeAt(0)+(n.charCodeAt(1)||0))%ACCT_COLORS.length];
@@ -703,6 +703,13 @@ export default function CRM(){
                           await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',address:lead.address||'',zip:lead.zip||'',industry:lead.industry||'',jobTitle:lead.jobTitle||'',activities:[{text:note,time:nowLabel()}]});
                           showToast('Lead moved to Contact Made!');
                         }}>📞 Contacted</button>
+                        <button style={{...S.btn,flex:'0 0 auto',justifyContent:'center',fontSize:11,color:'#A32D2D',padding:'0 10px'}} title="Not worth pursuing — removes this lead and keeps ZoomInfo from resurfacing this company" onClick={async()=>{
+                          if(!window.confirm(`Disqualify ${lead.company}? This removes it from your bucket and it won't be resurfaced by future ZoomInfo refills.`))return;
+                          const reason=window.prompt('Reason (optional — bad number, not a fit, do-not-call, etc.):')||'';
+                          await deleteLead(lead.id);
+                          await disqualifyBucketLead(lead.company,reason);
+                          showToast('Lead disqualified');
+                        }}>🚫</button>
                       </div>
                     </div>
                   ))}
