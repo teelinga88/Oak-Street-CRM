@@ -685,7 +685,7 @@ export default function CRM(){
                         </div>
                         <span style={{background:'#EEF2FF',color:'#3730A3',borderRadius:20,padding:'2px 8px',fontSize:11,fontWeight:500,flexShrink:0}}>{lead.attempts||0} att.</span>
                       </div>
-                      {lead.notes?.length>0&&<div style={{fontSize:11,color:'#aaa',background:'#fff',borderRadius:6,padding:'5px 8px',marginBottom:8}}>{lead.notes[0].text} · {lead.notes[0].time}</div>}
+                      {lead.notes?.length>0&&<div style={{fontSize:11,color:'#555',background:'#fff',borderRadius:6,padding:'5px 8px',marginBottom:8}}>{lead.notes[0].text} · {lead.notes[0].time}</div>}
                       <div style={{display:'flex',gap:6}}>
                         <button style={{...S.btn,flex:1,justifyContent:'center',fontSize:11}} onClick={()=>{
                           const notes=[{text:window.prompt('Notes (optional):')||'No contact',time:nowLabel()},...(lead.notes||[])];
@@ -748,7 +748,7 @@ export default function CRM(){
                         {fuContact&&<div style={{fontSize:11,color:'#888',marginTop:1}}>{fuContact}</div>}
                         {fuPhone&&<div style={{fontSize:11,color:'#888',marginTop:1}}>{fuPhone}</div>}
                         {fuEmail&&<div style={{fontSize:11,color:'#0C447C',marginTop:1}}>{fuEmail}</div>}
-                        {f.notes&&<div style={{fontSize:11,color:'#aaa',marginTop:3,fontStyle:'italic'}}>"{f.notes}"</div>}
+                        {f.notes&&<div style={{fontSize:11,color:'#555',marginTop:3,fontStyle:'italic'}}>"{f.notes}"</div>}
                         <div style={{fontSize:11,color:!f.done&&f.dueDate<today()?'#A32D2D':'#888',marginTop:4,fontWeight:!f.done&&f.dueDate<today()?600:400}}>
                           {!f.done&&f.dueDate<today()?'⚠ Overdue · ':''}{fmtDate(f.dueDate)}
                         </div>
@@ -934,12 +934,12 @@ export default function CRM(){
                   {a.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
                   {a.commodity&&<DetailRow k="Commodity" v={a.commodity}/>}
                 </DetailSection>}
-                {a.notes&&<DetailSection title="Notes"><p style={{fontSize:12,color:'#888',lineHeight:1.5}}>{a.notes}</p></DetailSection>}
+                {a.notes&&<DetailSection title="Notes"><p style={{fontSize:12,color:'#555',lineHeight:1.5}}>{a.notes}</p></DetailSection>}
                 {a.activities?.length>0&&<DetailSection title="Activity log">
                   {a.activities.map((act,i)=>(
                     <div key={i} style={{display:'flex',gap:8,marginBottom:10}}>
                       <div style={{width:7,height:7,borderRadius:'50%',background:'#D5D4CF',flexShrink:0,marginTop:4}}/>
-                      <div><div style={{fontSize:12,color:'#888',lineHeight:1.5}}>{act.text}</div><div style={{fontSize:11,color:'#aaa',marginTop:2}}>{act.time}</div></div>
+                      <div><div style={{fontSize:12,color:'#555',lineHeight:1.5}}>{act.text}</div><div style={{fontSize:11,color:'#888',marginTop:2}}>{act.time}</div></div>
                     </div>
                   ))}
                 </DetailSection>}
@@ -975,7 +975,7 @@ export default function CRM(){
                   {d.activities?.length>0?d.activities.map((n,i)=>(
                     <div key={i} style={{display:'flex',gap:8,marginBottom:10}}>
                       <div style={{width:7,height:7,borderRadius:'50%',background:'#D5D4CF',flexShrink:0,marginTop:4}}/>
-                      <div><div style={{fontSize:12,color:'#888'}}>{n.text}</div><div style={{fontSize:11,color:'#aaa',marginTop:2}}>{n.time}</div></div>
+                      <div><div style={{fontSize:12,color:'#555'}}>{n.text}</div><div style={{fontSize:11,color:'#888',marginTop:2}}>{n.time}</div></div>
                     </div>
                   )):<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No notes yet — click Edit prospect to add</div>}
                 </DetailSection>
@@ -1025,7 +1025,7 @@ export default function CRM(){
                           <div style={{width:18,height:18,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:600,background:rep?.color[0]||'#eee',color:rep?.color[1]||'#666'}}>{rep?.initials||'?'}</div>
                           <span style={{fontSize:11,color:'#888'}}>{d.rep}</span>
                         </div>
-                        {d.activities?.length>0&&<div style={{fontSize:11,color:'#aaa',marginTop:4}}>{d.activities[0].text} · {d.activities[0].time}</div>}
+                        {d.activities?.length>0&&<div style={{fontSize:11,color:'#555',marginTop:4}}>{d.activities[0].text} · {d.activities[0].time}</div>}
                       </div>
                     );
                   })}
