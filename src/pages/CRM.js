@@ -462,7 +462,7 @@ export default function CRM(){
 
       {/* Sidebar */}
       <div style={{width:210,borderRight:'0.5px solid #E5E4DF',background:'#F7F6F3',display:'flex',flexDirection:'column',flexShrink:0}}>
-        <div style={{height:64,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
+        <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
             <div><div style={{fontWeight:600,fontSize:13}}>Oak Street Logistics</div><div style={{fontSize:11,color:'#888'}}>Sales CRM</div></div>
@@ -491,7 +491,7 @@ export default function CRM(){
         {/* ACCOUNTS */}
         {view==='accounts'&&(
           <>
-            <div style={{height:64,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Accounts</h2>
               <div style={{display:'flex',gap:8}}>
                 <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
@@ -550,7 +550,7 @@ export default function CRM(){
                               <div style={{width:28,height:28,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:500,background:bg,color:fg,flexShrink:0}}>{initials(a.name)}</div>
                               <div>
                                 <div style={{fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.name}</div>
-                                <div style={{fontSize:11,color:'#888'}}>{a.contact||a.location||'—'}</div>
+                                <div style={{fontSize:11,color:'#555'}}>{a.contact||a.location||'—'}</div>
                               </div>
                             </div>
                           </td>
@@ -585,7 +585,7 @@ export default function CRM(){
         {/* PIPELINE */}
         {view==='pipeline'&&(
           <>
-            <div style={{height:64,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Pipeline</h2>
               <div style={{display:'flex',gap:8}}>
                 <select value={srcFilter} onChange={e=>setSrcFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
@@ -628,7 +628,7 @@ export default function CRM(){
                           <div key={d.id} onClick={()=>setSelId(d.id)}
                             style={{padding:'10px 12px',border:'0.5px solid #E5E4DF',borderRadius:8,marginBottom:6,cursor:'pointer',background:d.id===selId?'#F7F6F3':'#fff'}}>
                             <div style={{fontSize:13,fontWeight:700,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginBottom:2}}>{d.account}</div>
-                            {d.location&&<div style={{fontSize:11,color:'#888',marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.location}</div>}
+                            {d.location&&<div style={{fontSize:11,color:'#555',marginBottom:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.location}</div>}
                             <span style={{...srcStyle(d.source),padding:'1px 6px',borderRadius:20,fontSize:10,fontWeight:500}}>{d.source}</span>
                           </div>
                         ))}
@@ -644,7 +644,7 @@ export default function CRM(){
         {/* BUCKET */}
         {view==='bucket'&&(
           <>
-            <div style={{height:64,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{repProfile?.name.split(' ')[0]}'s Cold Call Bucket</h2>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:12,color:'#888'}}>{leads.length} / {BUCKET_CAP}</span>
@@ -676,10 +676,10 @@ export default function CRM(){
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                         <div>
                           <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>{lead.company}</div>
-                          {lead.industry&&<div style={{fontSize:11,color:'#888'}}>{lead.industry}</div>}
-                          <div style={{fontSize:11,color:'#888'}}>{lead.contact||''}{lead.jobTitle?` — ${lead.jobTitle}`:''}</div>
-                          {lead.email&&<div style={{fontSize:11,color:'#0C447C'}}>{lead.email}</div>}
-                          {lead.phone&&<div style={{fontSize:11,color:'#888'}}>{lead.phone}</div>}
+                          {lead.industry&&<div style={{fontSize:11,color:'#555'}}>{lead.industry}</div>}
+                          <div style={{fontSize:11,color:'#555'}}>{lead.contact||''}{lead.jobTitle?` — ${lead.jobTitle}`:''}</div>
+                          {lead.email&&<a href={`mailto:${lead.email}`} style={{fontSize:11,color:'#0C447C',textDecoration:'none',display:'block'}}>{lead.email}</a>}
+                          {lead.phone&&<div style={{fontSize:11,color:'#555'}}>{lead.phone}</div>}
                           {(lead.address||lead.location||lead.zip)&&<div style={{fontSize:11,color:'#aaa'}}>{[lead.address,lead.location,lead.zip].filter(Boolean).join(', ')}</div>}
                           {lead.website&&<a href={lead.website.match(/^https?:\/\//)?lead.website:`https://${lead.website}`} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:'#0C447C',textDecoration:'underline'}}>{lead.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>}
                         </div>
@@ -723,7 +723,7 @@ export default function CRM(){
         {/* FOLLOWUPS */}
         {view==='followups'&&(
           <>
-            <div style={{height:64,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Follow-ups</h2>
               <button style={S.btnPrimary} onClick={()=>openFollowupModal()}>+ Schedule follow-up</button>
             </div>
@@ -745,8 +745,8 @@ export default function CRM(){
                       <input type="checkbox" checked={f.done} onChange={async e=>{await updateFollowup(f.id,{done:e.target.checked,completedAt:e.target.checked?today():null});}} style={{flexShrink:0,width:15,height:15,cursor:'pointer',marginTop:2}}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:600,textDecoration:f.done?'line-through':'none',color:f.done?'#aaa':'#1a1a1a'}}>{f.account}</div>
-                        {fuContact&&<div style={{fontSize:11,color:'#888',marginTop:1}}>{fuContact}</div>}
-                        {fuPhone&&<div style={{fontSize:11,color:'#888',marginTop:1}}>{fuPhone}</div>}
+                        {fuContact&&<div style={{fontSize:11,color:'#555',marginTop:1}}>{fuContact}</div>}
+                        {fuPhone&&<div style={{fontSize:11,color:'#555',marginTop:1}}>{fuPhone}</div>}
                         {fuEmail&&<div style={{fontSize:11,color:'#0C447C',marginTop:1}}>{fuEmail}</div>}
                         {f.notes&&<div style={{fontSize:11,color:'#555',marginTop:3,fontStyle:'italic'}}>"{f.notes}"</div>}
                         <div style={{fontSize:11,color:!f.done&&f.dueDate<today()?'#A32D2D':'#888',marginTop:4,fontWeight:!f.done&&f.dueDate<today()?600:400}}>
@@ -775,7 +775,7 @@ export default function CRM(){
         {/* MANAGER */}
         {view==='manager'&&isManager&&(
           <>
-            <div style={{height:64,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',flexShrink:0}}>
+            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>Manager Dashboard</h2>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:16}}>
@@ -865,8 +865,8 @@ export default function CRM(){
       </div>
 
       {/* DETAIL PANEL */}
-      <div style={{width:380,borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-        <div style={{height:64,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+      <div style={{width:300,borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
+        <div style={{height:56,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <h3 style={{fontSize:13,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
           <div style={{display:'flex',gap:6}}>
             {selId&&view==='accounts'&&<button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>}
@@ -895,7 +895,7 @@ export default function CRM(){
                 <div style={{textAlign:'center',marginBottom:14}}>
                   <div style={{width:40,height:40,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:600,background:bg,color:fg,margin:'0 auto 8px'}}>{initials(a.name)}</div>
                   <div style={{fontSize:15,fontWeight:600}}>{a.name}</div>
-                  <div style={{fontSize:12,color:'#888'}}>{a.industry||''}{a.location?' · '+a.location:''}</div>
+                  <div style={{fontSize:12,color:'#555'}}>{a.industry||''}{a.location?' · '+a.location:''}</div>
                   <span style={{...badgeStyle(atRisk?'At risk':a.status),padding:'2px 8px',borderRadius:20,fontSize:11,fontWeight:500,marginTop:4,display:'inline-block'}}>{atRisk?'At risk':a.status}</span>
                 </div>
                 <div style={{background:atRisk?'#FCEBEB':'#E6F1FB',border:`0.5px solid ${atRisk?'#F09595':'#A8C8F0'}`,borderRadius:8,padding:'10px 12px',marginBottom:14}}>
