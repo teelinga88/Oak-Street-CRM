@@ -165,6 +165,22 @@ export async function dismissNetworkLead(companyName) {
   });
 }
 
+// ── Bucket lead disqualification ────────────────────────────────────────────
+// When a rep decides a Cold Call Bucket lead isn't worth pursuing (bad
+// number, not a fit, do-not-call, etc.), this removes it from the bucket
+// AND writes a lightweight record so the ZoomInfo weekly/on-demand refill
+// never resurfaces the same company later — same pattern as
+// dismissNetworkLead() above, just for ZoomInfo-sourced cold leads instead
+// of TAI-sourced Network Leads.
+export async function disqualifyBucketLead(companyName, reason = '') {
+  if (!companyName) return;
+  return addDoc(collection(db, 'disqualifiedLeads'), {
+    company: companyName,
+    reason: reason || '',
+    disqualifiedAt: serverTimestamp(),
+  });
+}
+
 // ── Celebrations (shared "Closed Won" broadcast) ────────────────────────────
 // When any rep closes a deal, we drop a lightweight doc here so every other
 // connected rep's browser can react in real time (fireworks + a sound) and
