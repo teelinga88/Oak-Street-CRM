@@ -412,7 +412,7 @@ export default function CRM(){
   }
 
   const[bucketForm,setBucketForm]=useState({});
-  function openBucketForm(){setBucketForm({company:'',contact:'',email:'',phone:'',location:'',address:'',zip:'',industry:'',jobTitle:''});setModal({type:'addLead'});}
+  function openBucketForm(){setBucketForm({company:'',contact:'',email:'',phone:'',location:'',address:'',zip:'',industry:'',jobTitle:'',website:''});setModal({type:'addLead'});}
   async function saveLead(){
     if(!bucketForm.company?.trim()){showToast('Company name required');return;}
     await addLead({...bucketForm,rep:repName});setModal(null);showToast('Lead added!');
@@ -681,6 +681,7 @@ export default function CRM(){
                           {lead.email&&<div style={{fontSize:11,color:'#0C447C'}}>{lead.email}</div>}
                           {lead.phone&&<div style={{fontSize:11,color:'#888'}}>{lead.phone}</div>}
                           {(lead.address||lead.location||lead.zip)&&<div style={{fontSize:11,color:'#aaa'}}>{[lead.address,lead.location,lead.zip].filter(Boolean).join(', ')}</div>}
+                          {lead.website&&<a href={lead.website.match(/^https?:\/\//)?lead.website:`https://${lead.website}`} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:'#0C447C',textDecoration:'underline'}}>{lead.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>}
                         </div>
                         <span style={{background:'#EEF2FF',color:'#3730A3',borderRadius:20,padding:'2px 8px',fontSize:11,fontWeight:500,flexShrink:0}}>{lead.attempts||0} att.</span>
                       </div>
@@ -700,7 +701,7 @@ export default function CRM(){
                           // follow-up is auto-scheduled either — reps set
                           // those manually now via "🔔 Set follow-up" on the
                           // prospect detail panel.
-                          await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',address:lead.address||'',zip:lead.zip||'',industry:lead.industry||'',jobTitle:lead.jobTitle||'',activities:[{text:note,time:nowLabel()}]});
+                          await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',address:lead.address||'',zip:lead.zip||'',industry:lead.industry||'',jobTitle:lead.jobTitle||'',website:lead.website||'',activities:[{text:note,time:nowLabel()}]});
                           showToast('Lead moved to Contact Made!');
                         }}>📞 Contacted</button>
                         <button style={{...S.btn,flex:'0 0 auto',justifyContent:'center',fontSize:11,color:'#A32D2D',padding:'0 10px'}} title="Not worth pursuing — removes this lead and keeps ZoomInfo from resurfacing this company" onClick={async()=>{
@@ -1156,6 +1157,7 @@ export default function CRM(){
           <FRow label="Zip"><input style={S.input} value={bucketForm.zip||''} onChange={e=>setBucketForm({...bucketForm,zip:e.target.value})} placeholder="60601"/></FRow>
           <FRow label="Industry"><input style={S.input} value={bucketForm.industry||''} onChange={e=>setBucketForm({...bucketForm,industry:e.target.value})} placeholder="Manufacturing"/></FRow>
           <FRow label="Job title"><input style={S.input} value={bucketForm.jobTitle||''} onChange={e=>setBucketForm({...bucketForm,jobTitle:e.target.value})} placeholder="Logistics Manager"/></FRow>
+          <FRow label="Website"><input style={S.input} value={bucketForm.website||''} onChange={e=>setBucketForm({...bucketForm,website:e.target.value})} placeholder="www.company.com"/></FRow>
         </Modal>
       )}
 
