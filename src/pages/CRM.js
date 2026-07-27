@@ -231,7 +231,23 @@ export default function CRM(){
   const{deals,addDeal,updateDeal,deleteDeal}=useDeals(repName,isManager);
   const{followups,addFollowup,updateFollowup,deleteFollowup}=useFollowups(repName,isManager);
   const{leads,addLead,updateLead,deleteLead}=useBucket(repName,isManager);
-  const{criteria:leadCriteria,saveLeadCriteria}=useLeadCriteria(repEmail);
+
+  // Manager-only "viewing as" — lets a manager pull up any rep's My
+  // Accounts / My Pipeline / Cold Call Bucket exactly like that rep sees
+  // them (switch via the sidebar selector, or "View this rep's screens" on
+  // the Manager Dashboard), instead of only ever seeing their own. Defaults
+  // to — and for non-managers always stays — the logged-in rep's own name.
+  const[viewAsRep,setViewAsRep]=useState(repName);
+  useEffect(()=>{ if(repName)setViewAsRep(repName); },[repName]);
+  // Email of whichever rep is currently being viewed — so "My lead
+  // criteria" reads/writes THAT rep's saved ZoomInfo criteria rather than
+  // always the logged-in manager's own.
+  const viewAsEmail=useMemo(()=>{
+    const entry=Object.entries(TEAM_ROSTER).find(([,r])=>r.name===viewAsRep);
+    return entry?entry[0]:repEmail;
+  },[viewAsRep,repEmail]);
+  const{criteria:leadCriteria,saveLeadCriteria}=useLeadCriteria(viewAsEmail);
+
   const[view,setView]=useState('accounts');
   const[selId,setSelId]=useState(null);
   const[modal,setModal]=useState(null);
@@ -241,7 +257,6 @@ export default function CRM(){
   const[daysSortDir,setDaysSortDir]=useState(null);
   const[srcFilter,setSrcFilter]=useState('');
   const[mgrSel,setMgrSel]=useState(null);
-  const[mgrAcctSearch,setMgrAcctSearch]=useState('');
   const[toast,setToast]=useState('');
   function showToast(msg){setToast(msg);setTimeout(()=>setToast(''),3000);}
   const[colSearch,setColSearch]=useState({});
@@ -255,22 +270,31 @@ export default function CRM(){
     return()=>clearTimeout(t);
   },[celebration?.id]);
 
-  const myAccounts=useMemo(()=>accounts.filter(a=>a.rep===repName),[accounts,repName]);
-  const myDeals=useMemo(()=>deals.filter(d=>d.rep===repName),[deals,repName]);
-  const myFollowups=useMemo(()=>followups.filter(f=>f.rep===repName),[followups,repName]);
+  const myAccounts=useMemo(()=>accounts.filter(a=>a.rep===viewAsRep),[accounts,viewAsRep]);
+  const myDeals=useMemo(()=>deals.filter(d=>d.rep===viewAsRep),[deals,viewAsRep]);
+  const myFollowups=useMemo(()=>followups.filter(f=>f.rep===viewAsRep),[followups,viewAsRep]);
   // `leads` is every rep's bucket when the caller is a manager (see useBucket
-  // above) — myLeads narrows it back down to "my own bucket" for the Cold
-  // Call Bucket view itself, same pattern as myAccounts/myDeals.
-  const myLeads=useMemo(()=>leads.filter(l=>l.rep===repName),[leads,repName]);
+  // above) — myLeads narrows it back down to whichever rep's bucket is
+  // currently being viewed, same pattern as myAccounts/myDeals.
+  const myLeads=useMemo(()=>leads.filter(l=>l.rep===viewAsRep),[leads,viewAsRep]);
 
   // Manager-only: move an account, prospect, or bucket lead to a different
-  // rep. Used from the Manager Dashboard's rep-detail panel (click a rep in
-  // Rep performance to see their records, each with a reassign dropdown).
+  // rep — triggered by the 🔁 Reassign button right on that record's own
+  // detail panel or card (see openReassignModal/reassignState below).
   async function reassignRecord(kind,id,newRep){
     if(kind==='account')await updateAccount(id,{rep:newRep});
     else if(kind==='deal')await updateDeal(id,{rep:newRep});
     else if(kind==='lead')await updateLead(id,{rep:newRep});
     showToast(`Reassigned to ${newRep.split(' ')[0]}`);
+  }
+  const[reassignState,setReassignState]=useState({});
+  function openReassignModal(kind,id,currentRep){
+    setReassignState({kind,id,rep:currentRep||viewAsRep});
+    setModal({type:'reassign'});
+  }
+  async function saveReassign(){
+    await reassignRecord(reassignState.kind,reassignState.id,reassignState.rep);
+    setModal(null);
   }
   const sortedAccounts=useMemo(()=>{
     const w=myAccounts.filter(a=>(a.shipmentsThisMonth||0)>0).sort((a,b)=>(b.shipmentsThisMonth||0)-(a.shipmentsThisMonth||0));
@@ -312,13 +336,13 @@ export default function CRM(){
   const[af,setAf]=useState({});
   function openAccountModal(id=null){
     const a=id?accounts.find(x=>x.id===id):null;
-    setAf(a?{...a}:{name:'',industry:'',location:'',status:'Active',contact:'',email:'',phone:'',shipmentType:'',commodity:'',notes:'',rep:repName});
+    setAf(a?{...a}:{name:'',industry:'',location:'',status:'Active',contact:'',email:'',phone:'',shipmentType:'',commodity:'',notes:'',rep:viewAsRep});
     setModal({type:'account',id});
   }
   async function saveAccount(){
     if(!af.name?.trim()){showToast('Company name required');return;}
-    if(modal.id){await updateAccount(modal.id,{...af,rep:af.rep||repName});}
-    else{await addAccount({...af,rep:af.rep||repName});}
+    if(modal.id){await updateAccount(modal.id,{...af,rep:af.rep||viewAsRep});}
+    else{await addAccount({...af,rep:af.rep||viewAsRep});}
     setModal(null);showToast('Account saved!');
   }
   async function handleDeleteAccount(){
@@ -364,7 +388,7 @@ export default function CRM(){
       // (see handleCloseWon), which is the only place an Account gets created.
       activities.push({text:'Prospect added to pipeline',time:nowLabel()});
       await addDeal({
-        account:accountName,accountId:null,stage,source:df.source,rep:repName,lostReason:'',activities,
+        account:accountName,accountId:null,stage,source:df.source,rep:viewAsRep,lostReason:'',activities,
         contact:df.npContact||'',email:df.npEmail||'',phone:df.npPhone||'',location:df.npLocation||'',shipmentType:df.npShipmentType||'',
       });
     }
@@ -391,13 +415,13 @@ export default function CRM(){
       const newAcct=await addAccount({
         name:deal.account,industry:'',location:deal.location||'',status:'Active',
         contact:deal.contact||'',email:deal.email||'',phone:deal.phone||'',
-        rep:deal.rep||repName,shipmentType:'',commodity:'',notes:'',wonAt,
+        rep:deal.rep||viewAsRep,shipmentType:'',commodity:'',notes:'',wonAt,
         activities:[{text:'🎉 Closed Won — converted from pipeline',time:nowLabel()}],
       });
       accountId=newAcct.id;
     }
     await deleteDeal(dealId);
-    await addCelebration({rep:deal.rep||repName,account:deal.account});
+    await addCelebration({rep:deal.rep||viewAsRep,account:deal.account});
     setSelId(null);
     showToast(`🎉 ${deal.account} marked Closed Won!`);
   }
@@ -415,7 +439,7 @@ export default function CRM(){
     if(!ff.dueDate){showToast('Due date required');return;}
     let account=ff.account;
     if(ff.accountId){const acct=accounts.find(a=>a.id===ff.accountId);account=acct?.name||account;}
-    const data={...ff,account,rep:repName};
+    const data={...ff,account,rep:viewAsRep};
     if(modal.id){await updateFollowup(modal.id,data);}else{await addFollowup(data);}
     setModal(null);showToast('Follow-up saved!');
   }
@@ -445,7 +469,26 @@ export default function CRM(){
   function openBucketForm(){setBucketForm({company:'',contact:'',email:'',phone:'',location:'',address:'',zip:'',industry:'',jobTitle:'',website:''});setModal({type:'addLead'});}
   async function saveLead(){
     if(!bucketForm.company?.trim()){showToast('Company name required');return;}
-    await addLead({...bucketForm,rep:repName});setModal(null);showToast('Lead added!');
+    await addLead({...bucketForm,rep:viewAsRep});setModal(null);showToast('Lead added!');
+  }
+
+  // Editing an EXISTING bucket lead — separate from "Add lead" above. Reps
+  // need this after a failed attempt turns up better info (a bad number,
+  // the real decision-maker's name, a corrected email, etc.) so the next
+  // attempt at this same lead actually has a shot. Only the editable fields
+  // are touched; attempts/notes/createdAt/rep/source are left alone.
+  function openEditLeadModal(lead){
+    setBucketForm({...lead});
+    setModal({type:'editLead',id:lead.id});
+  }
+  async function saveEditLead(){
+    if(!bucketForm.company?.trim()){showToast('Company name required');return;}
+    await updateLead(modal.id,{
+      company:bucketForm.company,contact:bucketForm.contact||'',email:bucketForm.email||'',phone:bucketForm.phone||'',
+      location:bucketForm.location||'',address:bucketForm.address||'',zip:bucketForm.zip||'',industry:bucketForm.industry||'',
+      jobTitle:bucketForm.jobTitle||'',website:bucketForm.website||'',
+    });
+    setModal(null);showToast('Lead updated!');
   }
 
   const[lcForm,setLcForm]=useState({});
@@ -516,6 +559,14 @@ export default function CRM(){
           <div style={{width:28,height:28,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:600,background:repProfile?.color[0],color:repProfile?.color[1],flexShrink:0}}>{repProfile?.initials}</div>
           <div><div style={{fontSize:12,fontWeight:500}}>{repProfile?.name}</div><div style={{fontSize:10,color:'#888'}}>{isManager?'Rep & Manager':'Sales Rep'}</div></div>
         </div>
+        {isManager&&(
+          <div style={{padding:'10px 14px',borderBottom:'0.5px solid #E5E4DF'}}>
+            <label style={{fontSize:10,color:'#aaa',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:4}}>Viewing as</label>
+            <select style={{...S.input,fontSize:12,padding:'6px 8px'}} value={viewAsRep} onChange={e=>{setViewAsRep(e.target.value);setSelId(null);}}>
+              {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name}{r.name===repName?' (you)':''}</option>)}
+            </select>
+          </div>
+        )}
         <nav style={{padding:8,flex:1}}>
           {navItems.map(item=>(
             <button key={item.id} onClick={()=>{setView(item.id);setSelId(null);}}
@@ -536,7 +587,7 @@ export default function CRM(){
         {view==='accounts'&&(
           <>
             <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Accounts</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{viewAsRep===repName?'My Accounts':`${viewAsRep.split(' ')[0]}'s Accounts`}</h2>
               <div style={{display:'flex',gap:8}}>
                 <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
                   <option value="">All statuses</option>{ACCT_STATUSES.map(s=><option key={s}>{s}</option>)}
@@ -630,7 +681,7 @@ export default function CRM(){
         {view==='pipeline'&&(
           <>
             <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Pipeline</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{viewAsRep===repName?'My Pipeline':`${viewAsRep.split(' ')[0]}'s Pipeline`}</h2>
               <div style={{display:'flex',gap:8}}>
                 <select value={srcFilter} onChange={e=>setSrcFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
                   <option value="">All sources</option>{SOURCES.map(s=><option key={s}>{s}</option>)}
@@ -689,11 +740,11 @@ export default function CRM(){
         {view==='bucket'&&(
           <>
             <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{repProfile?.name.split(' ')[0]}'s Cold Call Bucket</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{viewAsRep.split(' ')[0]}'s Cold Call Bucket</h2>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:12,color:'#888'}}>{myLeads.length} / {BUCKET_CAP}</span>
                 <button style={S.btn} onClick={openLeadCriteriaModal}>⚙️ My lead criteria</button>
-                {myLeads.length<BUCKET_CAP&&(
+                {viewAsRep===repName&&myLeads.length<BUCKET_CAP&&(
                   <button style={S.btn} onClick={handleRefillBucket} disabled={refillingBucket} title="Top your bucket off to 50 right now — useful after saving new/broader lead criteria. Otherwise it refills automatically every Monday at 6am.">
                     {refillingBucket?'Refilling…':'🔄 Refill bucket now'}
                   </button>
@@ -727,7 +778,11 @@ export default function CRM(){
                           {(lead.address||lead.location||lead.zip)&&<div style={{fontSize:11,color:'#aaa'}}>{[lead.address,lead.location,lead.zip].filter(Boolean).join(', ')}</div>}
                           {lead.website&&<a href={lead.website.match(/^https?:\/\//)?lead.website:`https://${lead.website}`} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:'#0C447C',textDecoration:'underline'}}>{lead.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>}
                         </div>
-                        <span style={{background:'#EEF2FF',color:'#3730A3',borderRadius:20,padding:'2px 8px',fontSize:11,fontWeight:500,flexShrink:0}}>{lead.attempts||0} att.</span>
+                        <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
+                          <span style={{background:'#EEF2FF',color:'#3730A3',borderRadius:20,padding:'2px 8px',fontSize:11,fontWeight:500}}>{lead.attempts||0} att.</span>
+                          <button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Edit this lead's info (fix a bad number, update the contact, etc.)" onClick={()=>openEditLeadModal(lead)}>✏️</button>
+                          {isManager&&<button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('lead',lead.id,lead.rep)}>🔁</button>}
+                        </div>
                       </div>
                       {lead.notes?.length>0&&<div style={{fontSize:11,color:'#555',background:'#fff',borderRadius:6,padding:'5px 8px',marginBottom:8}}>{lead.notes[0].text} · {lead.notes[0].time}</div>}
                       <div style={{display:'flex',gap:6}}>
@@ -745,7 +800,7 @@ export default function CRM(){
                           // follow-up is auto-scheduled either — reps set
                           // those manually now via "🔔 Set follow-up" on the
                           // prospect detail panel.
-                          await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:repName,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',address:lead.address||'',zip:lead.zip||'',industry:lead.industry||'',jobTitle:lead.jobTitle||'',website:lead.website||'',activities:[{text:note,time:nowLabel()}]});
+                          await addDeal({account:lead.company,accountId:null,stage:'Contact Made',source:'Cold Call',rep:viewAsRep,lostReason:'',contact:lead.contact||'',email:lead.email||'',phone:lead.phone||'',location:lead.location||'',address:lead.address||'',zip:lead.zip||'',industry:lead.industry||'',jobTitle:lead.jobTitle||'',website:lead.website||'',activities:[{text:note,time:nowLabel()}]});
                           showToast('Lead moved to Contact Made!');
                         }}>📞 Contacted</button>
                         <button style={{...S.btn,flex:'0 0 auto',justifyContent:'center',fontSize:11,color:'#A32D2D',padding:'0 10px'}} title="Not worth pursuing — removes this lead and keeps ZoomInfo from resurfacing this company" onClick={async()=>{
@@ -768,7 +823,7 @@ export default function CRM(){
         {view==='followups'&&(
           <>
             <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Follow-ups</h2>
+              <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{viewAsRep===repName?'My Follow-ups':`${viewAsRep.split(' ')[0]}'s Follow-ups`}</h2>
               <button style={S.btnPrimary} onClick={()=>openFollowupModal()}>+ Schedule follow-up</button>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:16}}>
@@ -913,12 +968,18 @@ export default function CRM(){
         <div style={{height:72,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <h3 style={{fontSize:13,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
           <div style={{display:'flex',gap:6}}>
-            {selId&&view==='accounts'&&<button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>}
+            {selId&&view==='accounts'&&(
+              <>
+                <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>
+                {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('account',selId,selectedAccount?.rep)}>🔁</button>}
+              </>
+            )}
             {selId&&view==='pipeline'&&(
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openDealModal(selId)}>✏️ Edit prospect</button>
                 <button style={{...S.btnFu,padding:'4px 10px',fontSize:11}} onClick={()=>openFollowupModal(null,null,selId)}>🔔 Set follow-up</button>
                 <button style={{...S.btnPrimary,padding:'4px 10px',fontSize:11,background:'#3B6D11',borderColor:'#3B6D11'}} onClick={()=>handleCloseWon(selId)}>🎉 Closed Won</button>
+                {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('deal',selId,selectedDeal?.rep)}>🔁</button>}
               </>
             )}
           </div>
@@ -1034,14 +1095,13 @@ export default function CRM(){
               const repDeals=deals.filter(d=>d.rep===rep.name);
               const repAccts=accounts.filter(a=>a.rep===rep.name);
               const repFu=followups.filter(f=>f.rep===rep.name&&!f.done);
-              const repLeads=leads.filter(l=>l.rep===rep.name);
-              const filteredRepAccts=repAccts.filter(a=>!mgrAcctSearch.trim()||a.name.toLowerCase().includes(mgrAcctSearch.trim().toLowerCase()));
               return(
                 <>
                   <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
                     <div style={{width:36,height:36,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:600,background:rep.color[0],color:rep.color[1]}}>{rep.initials}</div>
                     <div><div style={{fontSize:14,fontWeight:600}}>{rep.name}</div><div style={{fontSize:11,color:'#888'}}>{rep.isManager?'Rep & Manager':'Sales Rep'}</div></div>
                   </div>
+                  <button style={{...S.btnPrimary,justifyContent:'center',width:'100%',marginBottom:14}} onClick={()=>{setViewAsRep(rep.name);setView('accounts');setSelId(null);}}>👀 View {rep.name.split(' ')[0]}'s screens</button>
                   <DetailSection title="Shipments this month"><DetailRow k="Total" v={shipmentsPerRep[rep.name]||0}/><DetailRow k="Margin" v={fmtMoney(marginPerRep[rep.name]||0)}/></DetailSection>
                   <DetailSection title="Accounts">
                     <DetailRow k="Total" v={repAccts.length}/>
@@ -1052,49 +1112,6 @@ export default function CRM(){
                   <DetailSection title="Follow-ups">
                     <DetailRow k="Pending" v={repFu.length}/>
                     <DetailRow k="Overdue" v={repFu.filter(f=>f.dueDate<today()).length}/>
-                  </DetailSection>
-                  <DetailSection title="Accounts — reassign">
-                    {repAccts.length===0?(
-                      <div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No accounts</div>
-                    ):(
-                      <>
-                        <input value={mgrAcctSearch} onChange={e=>setMgrAcctSearch(e.target.value)} placeholder="Search this rep's accounts…" style={{width:'100%',fontSize:12,fontFamily:'inherit',padding:'6px 8px',border:'0.5px solid #E5E4DF',borderRadius:6,outline:'none',boxSizing:'border-box',marginBottom:8}}/>
-                        {filteredRepAccts.length===0?(
-                          <div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No matches</div>
-                        ):filteredRepAccts.map(a=>(
-                          <div key={a.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'0.5px solid #F0EFE8'}}>
-                            <span style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>{a.name}</span>
-                            <select style={{fontSize:11,padding:'3px 4px',border:'0.5px solid #D5D4CF',borderRadius:6,fontFamily:'inherit',flexShrink:0}} value={a.rep} onChange={e=>reassignRecord('account',a.id,e.target.value)}>
-                              {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name.split(' ')[0]}</option>)}
-                            </select>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </DetailSection>
-                  <DetailSection title="Prospects — reassign">
-                    {repDeals.length===0?(
-                      <div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No prospects</div>
-                    ):repDeals.map(d=>(
-                      <div key={d.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'0.5px solid #F0EFE8'}}>
-                        <span style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>{d.account}</span>
-                        <select style={{fontSize:11,padding:'3px 4px',border:'0.5px solid #D5D4CF',borderRadius:6,fontFamily:'inherit',flexShrink:0}} value={d.rep} onChange={e=>reassignRecord('deal',d.id,e.target.value)}>
-                          {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name.split(' ')[0]}</option>)}
-                        </select>
-                      </div>
-                    ))}
-                  </DetailSection>
-                  <DetailSection title="Cold Call Bucket — reassign">
-                    {repLeads.length===0?(
-                      <div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No bucket leads</div>
-                    ):repLeads.map(l=>(
-                      <div key={l.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'0.5px solid #F0EFE8'}}>
-                        <span style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>{l.company}</span>
-                        <select style={{fontSize:11,padding:'3px 4px',border:'0.5px solid #D5D4CF',borderRadius:6,fontFamily:'inherit',flexShrink:0}} value={l.rep} onChange={e=>reassignRecord('lead',l.id,e.target.value)}>
-                          {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name.split(' ')[0]}</option>)}
-                        </select>
-                      </div>
-                    ))}
                   </DetailSection>
                 </>
               );
@@ -1148,7 +1165,7 @@ export default function CRM(){
           <FRow label="Shipment Type"><input style={S.input} value={af.shipmentType||''} onChange={e=>setAf({...af,shipmentType:e.target.value})} placeholder="FTL Dry Van, LTL, Reefer"/></FRow>
           <FRow label="Commodity"><input style={S.input} value={af.commodity||''} onChange={e=>setAf({...af,commodity:e.target.value})} placeholder="General freight"/></FRow>
           <FRow label="Notes"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={af.notes||''} onChange={e=>setAf({...af,notes:e.target.value})} placeholder="Notes…"/></FRow>
-          {isManager&&<FRow label="Assign to rep"><select style={S.input} value={af.rep||repName} onChange={e=>setAf({...af,rep:e.target.value})}>{Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name}</option>)}</select></FRow>}
+          {isManager&&<FRow label="Assign to rep"><select style={S.input} value={af.rep||viewAsRep} onChange={e=>setAf({...af,rep:e.target.value})}>{Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name}</option>)}</select></FRow>}
         </Modal>
       )}
 
@@ -1250,8 +1267,33 @@ export default function CRM(){
         </Modal>
       )}
 
+      {modal?.type==='editLead'&&(
+        <Modal title="Edit lead" sub="Fix a bad number, update the contact, or correct any other info before the next attempt." onClose={()=>setModal(null)} onSave={saveEditLead}>
+          <FRow label="Company name *"><input style={S.input} value={bucketForm.company||''} onChange={e=>setBucketForm({...bucketForm,company:e.target.value})} placeholder="Acme Corp" autoFocus/></FRow>
+          <FRow label="Contact name"><input style={S.input} value={bucketForm.contact||''} onChange={e=>setBucketForm({...bucketForm,contact:e.target.value})} placeholder="John Smith"/></FRow>
+          <FRow label="Email"><input style={S.input} type="email" value={bucketForm.email||''} onChange={e=>setBucketForm({...bucketForm,email:e.target.value})} placeholder="john@company.com"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:e.target.value})} placeholder="(555) 000-0000"/></FRow>
+          <FRow label="Location"><input style={S.input} value={bucketForm.location||''} onChange={e=>setBucketForm({...bucketForm,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
+          <FRow label="Address"><input style={S.input} value={bucketForm.address||''} onChange={e=>setBucketForm({...bucketForm,address:e.target.value})} placeholder="123 Main St"/></FRow>
+          <FRow label="Zip"><input style={S.input} value={bucketForm.zip||''} onChange={e=>setBucketForm({...bucketForm,zip:e.target.value})} placeholder="60601"/></FRow>
+          <FRow label="Industry"><input style={S.input} value={bucketForm.industry||''} onChange={e=>setBucketForm({...bucketForm,industry:e.target.value})} placeholder="Manufacturing"/></FRow>
+          <FRow label="Job title"><input style={S.input} value={bucketForm.jobTitle||''} onChange={e=>setBucketForm({...bucketForm,jobTitle:e.target.value})} placeholder="Logistics Manager"/></FRow>
+          <FRow label="Website"><input style={S.input} value={bucketForm.website||''} onChange={e=>setBucketForm({...bucketForm,website:e.target.value})} placeholder="www.company.com"/></FRow>
+        </Modal>
+      )}
+
+      {modal?.type==='reassign'&&(
+        <Modal title="Reassign" sub="Move this record to a different rep." onClose={()=>setModal(null)} onSave={saveReassign} saveLabel="Reassign">
+          <FRow label="Assign to">
+            <select style={S.input} value={reassignState.rep||''} onChange={e=>setReassignState({...reassignState,rep:e.target.value})}>
+              {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name}</option>)}
+            </select>
+          </FRow>
+        </Modal>
+      )}
+
       {modal?.type==='leadCriteria'&&(
-        <Modal title="My Lead Criteria" sub="Used every Monday to refill your Cold Call Bucket back to 50 via ZoomInfo" onClose={()=>setModal(null)} onSave={saveLeadCriteriaForm} saveLabel="Save criteria">
+        <Modal title={viewAsRep===repName?"My Lead Criteria":`${viewAsRep}'s Lead Criteria`} sub="Used every Monday to refill this rep's Cold Call Bucket back to 50 via ZoomInfo" onClose={()=>setModal(null)} onSave={saveLeadCriteriaForm} saveLabel="Save criteria">
           <FRow label="Industries & lead counts">
             {(lcForm.industryAllocations&&lcForm.industryAllocations.length?lcForm.industryAllocations:[{industry:'',count:''}]).map((alloc,idx)=>(
               <div key={idx} style={{display:'flex',gap:8,alignItems:'center',marginBottom:8}}>
