@@ -461,8 +461,8 @@ export default function CRM(){
     <div style={{display:'flex',height:'100vh',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:14,color:'#1a1a1a',background:'#fff'}}>
 
       {/* Sidebar */}
-      <div style={{width:210,borderRight:'0.5px solid #E5E4DF',background:'#F7F6F3',display:'flex',flexDirection:'column',flexShrink:0}}>
-        <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
+      <div style={{width:240,borderRight:'0.5px solid #E5E4DF',background:'#F7F6F3',display:'flex',flexDirection:'column',flexShrink:0}}>
+        <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
             <div><div style={{fontWeight:600,fontSize:13}}>Oak Street Logistics</div><div style={{fontSize:11,color:'#888'}}>Sales CRM</div></div>
@@ -491,7 +491,7 @@ export default function CRM(){
         {/* ACCOUNTS */}
         {view==='accounts'&&(
           <>
-            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Accounts</h2>
               <div style={{display:'flex',gap:8}}>
                 <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
@@ -585,7 +585,7 @@ export default function CRM(){
         {/* PIPELINE */}
         {view==='pipeline'&&(
           <>
-            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Pipeline</h2>
               <div style={{display:'flex',gap:8}}>
                 <select value={srcFilter} onChange={e=>setSrcFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
@@ -644,7 +644,7 @@ export default function CRM(){
         {/* BUCKET */}
         {view==='bucket'&&(
           <>
-            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{repProfile?.name.split(' ')[0]}'s Cold Call Bucket</h2>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:12,color:'#888'}}>{leads.length} / {BUCKET_CAP}</span>
@@ -723,7 +723,7 @@ export default function CRM(){
         {/* FOLLOWUPS */}
         {view==='followups'&&(
           <>
-            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>My Follow-ups</h2>
               <button style={S.btnPrimary} onClick={()=>openFollowupModal()}>+ Schedule follow-up</button>
             </div>
@@ -775,7 +775,7 @@ export default function CRM(){
         {/* MANAGER */}
         {view==='manager'&&isManager&&(
           <>
-            <div style={{height:56,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>Manager Dashboard</h2>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:16}}>
@@ -866,7 +866,7 @@ export default function CRM(){
 
       {/* DETAIL PANEL */}
       <div style={{width:300,borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-        <div style={{height:56,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+        <div style={{height:72,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <h3 style={{fontSize:13,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
           <div style={{display:'flex',gap:6}}>
             {selId&&view==='accounts'&&<button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>}
