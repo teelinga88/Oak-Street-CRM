@@ -258,15 +258,19 @@ export function useLeadCriteria(repEmail) {
 }
 
 // ── On-demand Cold Call Bucket refill ──────────────────────────────────────
-// Calls the requestBucketRefill Cloud Function. That function enforces
-// server-side that the rep's bucket is completely empty (0 leads) before
-// pulling anything from ZoomInfo — a rep with leads still in their bucket,
-// even just a few, gets a rejected/thrown error and must wait for the
-// normal Monday 6am auto-refill instead. Returns { added } on success, or
-// throws (err.message holds the human-readable reason) on failure.
-export async function requestBucketRefill() {
+// Calls the requestBucketRefill Cloud Function to top a bucket off to
+// BUCKET_CAP via ZoomInfo. With no args, refills the CALLER's own bucket and
+// enforces the normal weekly cap. A manager can instead pass
+// { targetRepEmail, override: true, count } to pull `count` (1-25, default
+// 10) extra leads into ANY rep's bucket — including their own — bypassing
+// the "already full" / "already used this week's allotment" checks
+// entirely. The backend re-verifies the caller is actually a manager; the
+// client's isManager flag is never trusted for this. Returns
+// { added, repName, override } on success, or throws (err.message is
+// human-readable) on failure.
+export async function requestBucketRefill(payload) {
   const callable = httpsCallable(functions, 'requestBucketRefill');
-  const result = await callable();
+  const result = await callable(payload || {});
   return result.data;
 }
 
