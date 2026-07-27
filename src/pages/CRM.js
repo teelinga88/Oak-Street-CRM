@@ -230,7 +230,7 @@ export default function CRM(){
   const{accounts,addAccount,updateAccount,deleteAccount}=useAccounts(repName,isManager);
   const{deals,addDeal,updateDeal,deleteDeal}=useDeals(repName,isManager);
   const{followups,addFollowup,updateFollowup,deleteFollowup}=useFollowups(repName,isManager);
-  const{leads,addLead,updateLead,deleteLead}=useBucket(repName);
+  const{leads,addLead,updateLead,deleteLead}=useBucket(repName,isManager);
   const{criteria:leadCriteria,saveLeadCriteria}=useLeadCriteria(repEmail);
   const[view,setView]=useState('accounts');
   const[selId,setSelId]=useState(null);
@@ -241,6 +241,7 @@ export default function CRM(){
   const[daysSortDir,setDaysSortDir]=useState(null);
   const[srcFilter,setSrcFilter]=useState('');
   const[mgrSel,setMgrSel]=useState(null);
+  const[mgrAcctSearch,setMgrAcctSearch]=useState('');
   const[toast,setToast]=useState('');
   function showToast(msg){setToast(msg);setTimeout(()=>setToast(''),3000);}
   const[colSearch,setColSearch]=useState({});
@@ -257,6 +258,20 @@ export default function CRM(){
   const myAccounts=useMemo(()=>accounts.filter(a=>a.rep===repName),[accounts,repName]);
   const myDeals=useMemo(()=>deals.filter(d=>d.rep===repName),[deals,repName]);
   const myFollowups=useMemo(()=>followups.filter(f=>f.rep===repName),[followups,repName]);
+  // `leads` is every rep's bucket when the caller is a manager (see useBucket
+  // above) — myLeads narrows it back down to "my own bucket" for the Cold
+  // Call Bucket view itself, same pattern as myAccounts/myDeals.
+  const myLeads=useMemo(()=>leads.filter(l=>l.rep===repName),[leads,repName]);
+
+  // Manager-only: move an account, prospect, or bucket lead to a different
+  // rep. Used from the Manager Dashboard's rep-detail panel (click a rep in
+  // Rep performance to see their records, each with a reassign dropdown).
+  async function reassignRecord(kind,id,newRep){
+    if(kind==='account')await updateAccount(id,{rep:newRep});
+    else if(kind==='deal')await updateDeal(id,{rep:newRep});
+    else if(kind==='lead')await updateLead(id,{rep:newRep});
+    showToast(`Reassigned to ${newRep.split(' ')[0]}`);
+  }
   const sortedAccounts=useMemo(()=>{
     const w=myAccounts.filter(a=>(a.shipmentsThisMonth||0)>0).sort((a,b)=>(b.shipmentsThisMonth||0)-(a.shipmentsThisMonth||0));
     const wo=myAccounts.filter(a=>!(a.shipmentsThisMonth>0)).sort((a,b)=>a.name.localeCompare(b.name));
@@ -676,9 +691,9 @@ export default function CRM(){
             <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{repProfile?.name.split(' ')[0]}'s Cold Call Bucket</h2>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
-                <span style={{fontSize:12,color:'#888'}}>{leads.length} / {BUCKET_CAP}</span>
+                <span style={{fontSize:12,color:'#888'}}>{myLeads.length} / {BUCKET_CAP}</span>
                 <button style={S.btn} onClick={openLeadCriteriaModal}>⚙️ My lead criteria</button>
-                {leads.length<BUCKET_CAP&&(
+                {myLeads.length<BUCKET_CAP&&(
                   <button style={S.btn} onClick={handleRefillBucket} disabled={refillingBucket} title="Top your bucket off to 50 right now — useful after saving new/broader lead criteria. Otherwise it refills automatically every Monday at 6am.">
                     {refillingBucket?'Refilling…':'🔄 Refill bucket now'}
                   </button>
@@ -690,17 +705,17 @@ export default function CRM(){
               <div style={{...S.card,marginBottom:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                   <span style={{fontSize:13,fontWeight:500}}>Bucket capacity</span>
-                  <span style={{fontSize:12,fontWeight:500,color:leads.length>=BUCKET_CAP?'#A32D2D':leads.length>=80?'#633806':'#3B6D11'}}>{leads.length} / {BUCKET_CAP}</span>
+                  <span style={{fontSize:12,fontWeight:500,color:myLeads.length>=BUCKET_CAP?'#A32D2D':myLeads.length>=80?'#633806':'#3B6D11'}}>{myLeads.length} / {BUCKET_CAP}</span>
                 </div>
                 <div style={{height:6,borderRadius:3,background:'#E5E4DF',overflow:'hidden'}}>
-                  <div style={{height:'100%',borderRadius:3,width:`${Math.min(leads.length/BUCKET_CAP*100,100)}%`,background:leads.length>=BUCKET_CAP?'#A32D2D':leads.length>=80?'#FAC775':'#3B6D11'}}/>
+                  <div style={{height:'100%',borderRadius:3,width:`${Math.min(myLeads.length/BUCKET_CAP*100,100)}%`,background:myLeads.length>=BUCKET_CAP?'#A32D2D':myLeads.length>=80?'#FAC775':'#3B6D11'}}/>
                 </div>
               </div>
-              {leads.length===0?(
+              {myLeads.length===0?(
                 <div style={{textAlign:'center',padding:40,color:'#888'}}><div style={{fontSize:28,marginBottom:8}}>📞</div>Bucket empty. Add leads to get started.</div>
               ):(
                 <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
-                  {leads.map(lead=>(
+                  {myLeads.map(lead=>(
                     <div key={lead.id} style={S.card}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                         <div>
@@ -1019,6 +1034,8 @@ export default function CRM(){
               const repDeals=deals.filter(d=>d.rep===rep.name);
               const repAccts=accounts.filter(a=>a.rep===rep.name);
               const repFu=followups.filter(f=>f.rep===rep.name&&!f.done);
+              const repLeads=leads.filter(l=>l.rep===rep.name);
+              const filteredRepAccts=repAccts.filter(a=>!mgrAcctSearch.trim()||a.name.toLowerCase().includes(mgrAcctSearch.trim().toLowerCase()));
               return(
                 <>
                   <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
@@ -1035,6 +1052,49 @@ export default function CRM(){
                   <DetailSection title="Follow-ups">
                     <DetailRow k="Pending" v={repFu.length}/>
                     <DetailRow k="Overdue" v={repFu.filter(f=>f.dueDate<today()).length}/>
+                  </DetailSection>
+                  <DetailSection title="Accounts — reassign">
+                    {repAccts.length===0?(
+                      <div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No accounts</div>
+                    ):(
+                      <>
+                        <input value={mgrAcctSearch} onChange={e=>setMgrAcctSearch(e.target.value)} placeholder="Search this rep's accounts…" style={{width:'100%',fontSize:12,fontFamily:'inherit',padding:'6px 8px',border:'0.5px solid #E5E4DF',borderRadius:6,outline:'none',boxSizing:'border-box',marginBottom:8}}/>
+                        {filteredRepAccts.length===0?(
+                          <div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No matches</div>
+                        ):filteredRepAccts.map(a=>(
+                          <div key={a.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'0.5px solid #F0EFE8'}}>
+                            <span style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>{a.name}</span>
+                            <select style={{fontSize:11,padding:'3px 4px',border:'0.5px solid #D5D4CF',borderRadius:6,fontFamily:'inherit',flexShrink:0}} value={a.rep} onChange={e=>reassignRecord('account',a.id,e.target.value)}>
+                              {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name.split(' ')[0]}</option>)}
+                            </select>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </DetailSection>
+                  <DetailSection title="Prospects — reassign">
+                    {repDeals.length===0?(
+                      <div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No prospects</div>
+                    ):repDeals.map(d=>(
+                      <div key={d.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'0.5px solid #F0EFE8'}}>
+                        <span style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>{d.account}</span>
+                        <select style={{fontSize:11,padding:'3px 4px',border:'0.5px solid #D5D4CF',borderRadius:6,fontFamily:'inherit',flexShrink:0}} value={d.rep} onChange={e=>reassignRecord('deal',d.id,e.target.value)}>
+                          {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name.split(' ')[0]}</option>)}
+                        </select>
+                      </div>
+                    ))}
+                  </DetailSection>
+                  <DetailSection title="Cold Call Bucket — reassign">
+                    {repLeads.length===0?(
+                      <div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No bucket leads</div>
+                    ):repLeads.map(l=>(
+                      <div key={l.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'0.5px solid #F0EFE8'}}>
+                        <span style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>{l.company}</span>
+                        <select style={{fontSize:11,padding:'3px 4px',border:'0.5px solid #D5D4CF',borderRadius:6,fontFamily:'inherit',flexShrink:0}} value={l.rep} onChange={e=>reassignRecord('lead',l.id,e.target.value)}>
+                          {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name.split(' ')[0]}</option>)}
+                        </select>
+                      </div>
+                    ))}
                   </DetailSection>
                 </>
               );
