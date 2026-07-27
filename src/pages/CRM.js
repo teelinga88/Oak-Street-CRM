@@ -649,8 +649,8 @@ export default function CRM(){
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:12,color:'#888'}}>{leads.length} / {BUCKET_CAP}</span>
                 <button style={S.btn} onClick={openLeadCriteriaModal}>⚙️ My lead criteria</button>
-                {leads.length===0&&(
-                  <button style={S.btn} onClick={handleRefillBucket} disabled={refillingBucket} title="Only available when your bucket is completely empty — otherwise it refills automatically every Monday at 6am">
+                {leads.length<BUCKET_CAP&&(
+                  <button style={S.btn} onClick={handleRefillBucket} disabled={refillingBucket} title="Top your bucket off to 50 right now — useful after saving new/broader lead criteria. Otherwise it refills automatically every Monday at 6am.">
                     {refillingBucket?'Refilling…':'🔄 Refill bucket now'}
                   </button>
                 )}
