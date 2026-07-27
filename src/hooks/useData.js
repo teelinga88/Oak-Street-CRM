@@ -121,19 +121,28 @@ export function useFollowups(repName, isManager = false) {
 }
 
 // ── Bucket leads ──────────────────────────────────────────────────────────
-export function useBucket(repName) {
+// isManager mirrors useAccounts/useDeals above: managers need to see every
+// rep's bucket leads (not just their own) so they can reassign a lead to a
+// different rep from the Manager Dashboard. Non-managers still only ever get
+// their own bucket, same as before.
+export function useBucket(repName, isManager = false) {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!repName) return;
-    const q = query(collection(db, 'bucket'), where('rep', '==', repName), orderBy('createdAt', 'desc'));
+    let q;
+    if (isManager) {
+      q = query(collection(db, 'bucket'), orderBy('createdAt', 'desc'));
+    } else {
+      q = query(collection(db, 'bucket'), where('rep', '==', repName), orderBy('createdAt', 'desc'));
+    }
     const unsub = onSnapshot(q, snap => {
       setLeads(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
     });
     return unsub;
-  }, [repName]);
+  }, [repName, isManager]);
 
   async function addLead(data) {
     return addDoc(collection(db, 'bucket'), { ...data, attempts: 0, notes: [], createdAt: serverTimestamp() });
