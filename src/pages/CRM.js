@@ -536,6 +536,29 @@ export default function CRM(){
     }
   }
 
+  // Manager-only override: pull extra ZoomInfo leads into WHICHEVER rep's
+  // bucket is currently being viewed (viewAsRep/viewAsEmail), bypassing both
+  // the "already full" and "already used this week's allotment" checks on
+  // the backend. This is the escape hatch for "every rep's bucket is maxed
+  // out but we still need a lead pulled" — the normal Refill button above
+  // can't do this (it's capped, and only ever targets your OWN bucket).
+  const[overrideState,setOverrideState]=useState({count:10});
+  const[overriding,setOverriding]=useState(false);
+  function openOverrideModal(){setOverrideState({count:10});setModal({type:'override'});}
+  async function saveOverride(){
+    if(overriding)return;
+    setOverriding(true);
+    try{
+      const{added}=await requestBucketRefill({targetRepEmail:viewAsEmail,override:true,count:Number(overrideState.count)||10});
+      showToast(added>0?`Pulled ${added} new lead${added===1?'':'s'} for ${viewAsRep.split(' ')[0]} — cap overridden.`:'No matching leads found for the saved criteria.');
+      setModal(null);
+    }catch(err){
+      showToast(err.message||'Could not override — try again.');
+    }finally{
+      setOverriding(false);
+    }
+  }
+
   const navItems=[
     {id:'accounts',label:'My Accounts',icon:'👥'},
     {id:'pipeline',label:'My Pipeline',icon:'📊'},
@@ -749,6 +772,11 @@ export default function CRM(){
                     {refillingBucket?'Refilling…':'🔄 Refill bucket now'}
                   </button>
                 )}
+                {isManager&&(
+                  <button style={{...S.btn,background:'#FFF7E6',borderColor:'#E8B54A',color:'#7A4E00'}} onClick={openOverrideModal} title="Manager-only: pull extra ZoomInfo leads for this rep even though their bucket is already full or has used this week's 50-lead allotment.">
+                    🎯 Override cap & pull
+                  </button>
+                )}
                 <button style={S.btnPrimary} onClick={openBucketForm}>+ Add lead</button>
               </div>
             </div>
@@ -781,7 +809,7 @@ export default function CRM(){
                         <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
                           <span style={{background:'#EEF2FF',color:'#3730A3',borderRadius:20,padding:'2px 8px',fontSize:11,fontWeight:500}}>{lead.attempts||0} att.</span>
                           <button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Edit this lead's info (fix a bad number, update the contact, etc.)" onClick={()=>openEditLeadModal(lead)}>✏️</button>
-                          {isManager&&<button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('lead',lead.id,lead.rep)}>🔁</button>}
+                          {isManager&&<button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('lead',lead.id,lead.rep)}>👤</button>}
                         </div>
                       </div>
                       {lead.notes?.length>0&&<div style={{fontSize:11,color:'#555',background:'#fff',borderRadius:6,padding:'5px 8px',marginBottom:8}}>{lead.notes[0].text} · {lead.notes[0].time}</div>}
@@ -971,7 +999,7 @@ export default function CRM(){
             {selId&&view==='accounts'&&(
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>
-                {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('account',selId,selectedAccount?.rep)}>🔁</button>}
+                {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('account',selId,selectedAccount?.rep)}>👤 Reassign</button>}
               </>
             )}
             {selId&&view==='pipeline'&&(
@@ -979,7 +1007,7 @@ export default function CRM(){
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openDealModal(selId)}>✏️ Edit prospect</button>
                 <button style={{...S.btnFu,padding:'4px 10px',fontSize:11}} onClick={()=>openFollowupModal(null,null,selId)}>🔔 Set follow-up</button>
                 <button style={{...S.btnPrimary,padding:'4px 10px',fontSize:11,background:'#3B6D11',borderColor:'#3B6D11'}} onClick={()=>handleCloseWon(selId)}>🎉 Closed Won</button>
-                {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('deal',selId,selectedDeal?.rep)}>🔁</button>}
+                {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('deal',selId,selectedDeal?.rep)}>👤 Reassign</button>}
               </>
             )}
           </div>
@@ -1288,6 +1316,14 @@ export default function CRM(){
             <select style={S.input} value={reassignState.rep||''} onChange={e=>setReassignState({...reassignState,rep:e.target.value})}>
               {Object.values(TEAM_ROSTER).map(r=><option key={r.name} value={r.name}>{r.name}</option>)}
             </select>
+          </FRow>
+        </Modal>
+      )}
+
+      {modal?.type==='override'&&(
+        <Modal title="Override cap & pull from ZoomInfo" sub={`Manager-only: pull new leads for ${viewAsRep.split(' ')[0]} from ZoomInfo even though their bucket is already full or has used this week's allotment. Doesn't change the normal 50-lead cap for anyone else.`} onClose={()=>setModal(null)} onSave={saveOverride} saveLabel={overriding?'Pulling…':'Pull leads'}>
+          <FRow label="How many leads?">
+            <input type="number" min={1} max={25} style={S.input} value={overrideState.count} onChange={e=>setOverrideState({...overrideState,count:e.target.value})}/>
           </FRow>
         </Modal>
       )}
