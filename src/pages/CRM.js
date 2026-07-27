@@ -1191,7 +1191,7 @@ export default function CRM(){
       )}
 
       {modal?.type==='leadCriteria'&&(
-        <Modal title="My Lead Criteria" sub="Used every Monday to refill your Cold Call Bucket back to 100 via ZoomInfo" onClose={()=>setModal(null)} onSave={saveLeadCriteriaForm} saveLabel="Save criteria">
+        <Modal title="My Lead Criteria" sub="Used every Monday to refill your Cold Call Bucket back to 50 via ZoomInfo" onClose={()=>setModal(null)} onSave={saveLeadCriteriaForm} saveLabel="Save criteria">
           <FRow label="Industries & lead counts">
             {(lcForm.industryAllocations&&lcForm.industryAllocations.length?lcForm.industryAllocations:[{industry:'',count:''}]).map((alloc,idx)=>(
               <div key={idx} style={{display:'flex',gap:8,alignItems:'center',marginBottom:8}}>
