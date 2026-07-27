@@ -138,6 +138,21 @@ function IndustryPicker({value,onChange,options}){
     </div>
   );
 }
+
+// Wraps IndustryPicker (a multi-select chip autocomplete) to behave as a
+// single-industry select for one allocation row: reuses the same searchable
+// ZoomInfo-taxonomy dropdown UX, but only ever keeps the most recently picked
+// value instead of a growing chip list.
+function IndustryRowPicker({industry,onChange,options}){
+  const value=industry?[industry]:[];
+  return(
+    <IndustryPicker
+      value={value}
+      options={options}
+      onChange={(arr)=>onChange(arr.length?arr[arr.length-1]:'')}
+    />
+  );
+}
 function FGrid({children}){return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>{children}</div>;}
 function DetailSection({title,children}){return(<div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:500,color:'#aaa',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:6}}>{title}</div>{children}</div>);}
 function DetailRow({k,v}){return(<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,padding:'4px 0',borderBottom:'0.5px solid #F0EFE8'}}><span style={{color:'#888'}}>{k}</span><span style={{fontWeight:500,textAlign:'right',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v}</span></div>);}
@@ -430,11 +445,25 @@ export default function CRM(){
       getZoomInfoIndustries().then(setZoomInfoIndustries).catch(()=>setZoomInfoIndustries([]));
     }
   },[modal,zoomInfoIndustries]);
-  const industryList=useMemo(()=>{
-    const raw=(lcForm.industryKeywords||'').trim();
-    if(!raw) return [];
-    return raw.split(/\s+OR\s+/i).map(s=>s.trim()).filter(Boolean);
-  },[lcForm.industryKeywords]);
+
+  // Each industry allocation is one { industry, count } row — ZoomInfo can't
+  // reliably OR multiple industries together in one search, so reps instead
+  // pick a single industry per row and say how many leads they want from it
+  // (e.g. 30 Manufacturing, 20 Building Materials); fillBucketForRep runs one
+  // plain search per row on the backend.
+  function updateIndustryAllocation(idx,patch){
+    const list=lcForm.industryAllocations&&lcForm.industryAllocations.length?[...lcForm.industryAllocations]:[{industry:'',count:''}];
+    list[idx]={...list[idx],...patch};
+    setLcForm({...lcForm,industryAllocations:list});
+  }
+  function addIndustryAllocationRow(){
+    const list=lcForm.industryAllocations&&lcForm.industryAllocations.length?[...lcForm.industryAllocations]:[{industry:'',count:''}];
+    setLcForm({...lcForm,industryAllocations:[...list,{industry:'',count:''}]});
+  }
+  function removeIndustryAllocationRow(idx){
+    const list=(lcForm.industryAllocations||[]).filter((_,i)=>i!==idx);
+    setLcForm({...lcForm,industryAllocations:list});
+  }
 
   const[refillingBucket,setRefillingBucket]=useState(false);
   async function handleRefillBucket(){
@@ -1163,9 +1192,18 @@ export default function CRM(){
 
       {modal?.type==='leadCriteria'&&(
         <Modal title="My Lead Criteria" sub="Used every Monday to refill your Cold Call Bucket back to 100 via ZoomInfo" onClose={()=>setModal(null)} onSave={saveLeadCriteriaForm} saveLabel="Save criteria">
-          <FRow label="Industry keywords">
-            <IndustryPicker value={industryList} options={zoomInfoIndustries} onChange={arr=>setLcForm({...lcForm,industryKeywords:arr.join(' OR ')})}/>
-            <div style={{fontSize:11,color:'#aaa',marginTop:4}}>Type to search ZoomInfo's industry list, click (or press Enter) to add. Multiple industries are OR'd together.</div>
+          <FRow label="Industries & lead counts">
+            {(lcForm.industryAllocations&&lcForm.industryAllocations.length?lcForm.industryAllocations:[{industry:'',count:''}]).map((alloc,idx)=>(
+              <div key={idx} style={{display:'flex',gap:8,alignItems:'center',marginBottom:8}}>
+                <div style={{flex:1}}>
+                  <IndustryRowPicker industry={alloc.industry||''} options={zoomInfoIndustries} onChange={name=>updateIndustryAllocation(idx,{industry:name})}/>
+                </div>
+                <input style={{...S.input,width:80}} type="number" min="0" value={alloc.count||''} placeholder="# leads" onChange={e=>updateIndustryAllocation(idx,{count:e.target.value})}/>
+                <button style={{...S.btn,padding:'6px 10px'}} onClick={()=>removeIndustryAllocationRow(idx)}>✕</button>
+              </div>
+            ))}
+            <button style={S.btn} onClick={addIndustryAllocationRow}>+ Add another industry</button>
+            <div style={{fontSize:11,color:'#aaa',marginTop:4}}>Each industry is searched on its own — set how many leads you want from it (e.g. 30 Manufacturing, 20 Building Materials). ZoomInfo can't reliably combine multiple industries in one search, so each row pulls independently.</div>
           </FRow>
           <FGrid>
             <FRow label="State(s)"><input style={S.input} value={lcForm.state||''} onChange={e=>setLcForm({...lcForm,state:e.target.value})} placeholder="TX, OK, AR"/></FRow>
