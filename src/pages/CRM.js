@@ -994,7 +994,7 @@ export default function CRM(){
 
       {/* DETAIL PANEL */}
       <div style={{width:420,maxWidth:'38vw',borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-        <div style={{boxSizing:'border-box',padding:'12px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',gap:8,flexShrink:0}}>
+        <div style={{minHeight:72,boxSizing:'border-box',padding:'12px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',gap:8,justifyContent:'center',flexShrink:0}}>
           <h3 style={{fontSize:14,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             {selId&&view==='accounts'&&(
