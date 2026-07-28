@@ -994,9 +994,11 @@ export default function CRM(){
 
       {/* DETAIL PANEL */}
       <div style={{width:420,maxWidth:'38vw',borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-        <div style={{minHeight:72,boxSizing:'border-box',padding:'12px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',gap:8,justifyContent:'center',flexShrink:0}}>
+        <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <h3 style={{fontSize:14,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
-          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        </div>
+        {((selId&&view==='accounts')||(selId&&view==='pipeline')||(selId&&view==='bucket'&&selectedLead))&&(
+          <div style={{boxSizing:'border-box',padding:'10px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',gap:8,flexWrap:'wrap',flexShrink:0}}>
             {selId&&view==='accounts'&&(
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>
@@ -1018,7 +1020,7 @@ export default function CRM(){
               </>
             )}
           </div>
-        </div>
+        )}
         <div style={{flex:1,overflowY:'auto',padding:20}}>
 
           {/* Account detail */}
