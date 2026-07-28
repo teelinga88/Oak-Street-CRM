@@ -154,8 +154,8 @@ function IndustryRowPicker({industry,onChange,options}){
   );
 }
 function FGrid({children}){return <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>{children}</div>;}
-function DetailSection({title,children}){return(<div style={{marginBottom:14}}><div style={{fontSize:10,fontWeight:500,color:'#aaa',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:6}}>{title}</div>{children}</div>);}
-function DetailRow({k,v}){return(<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:12,padding:'4px 0',borderBottom:'0.5px solid #F0EFE8'}}><span style={{color:'#888'}}>{k}</span><span style={{fontWeight:500,textAlign:'right',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v}</span></div>);}
+function DetailSection({title,children}){return(<div style={{marginBottom:20}}><div style={{fontSize:11,fontWeight:500,color:'#aaa',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:10}}>{title}</div>{children}</div>);}
+function DetailRow({k,v}){return(<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:13,padding:'8px 0',borderBottom:'0.5px solid #F0EFE8'}}><span style={{color:'#888'}}>{k}</span><span style={{fontWeight:500,textAlign:'right',maxWidth:280,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{v}</span></div>);}
 
 // ── Closed Won celebration ───────────────────────────────────────────────
 // A short ascending 4-note chime, synthesized with the Web Audio API so no
@@ -573,9 +573,9 @@ export default function CRM(){
 
       {/* Sidebar */}
       <div style={{width:240,borderRight:'0.5px solid #E5E4DF',background:'#F7F6F3',display:'flex',flexDirection:'column',flexShrink:0}}>
-        <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
-            <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:40,height:40,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
+        <div style={{height:72,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
+          <div style={{display:'flex',alignItems:'center',gap:18}}>
+            <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:56,height:56,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
             <div><div style={{fontWeight:600,fontSize:13}}>Oak Street Logistics</div><div style={{fontSize:11,color:'#888'}}>Sales CRM</div></div>
           </div>
         </div>
@@ -993,10 +993,10 @@ export default function CRM(){
       </div>
 
       {/* DETAIL PANEL */}
-      <div style={{width:300,borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-        <div style={{height:72,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <h3 style={{fontSize:13,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
-          <div style={{display:'flex',gap:6}}>
+      <div style={{width:420,borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
+        <div style={{minHeight:72,boxSizing:'border-box',padding:'12px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',flexWrap:'wrap',rowGap:8,justifyContent:'space-between',flexShrink:0}}>
+          <h3 style={{fontSize:14,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
             {selId&&view==='accounts'&&(
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>
@@ -1019,7 +1019,7 @@ export default function CRM(){
             )}
           </div>
         </div>
-        <div style={{flex:1,overflowY:'auto',padding:14}}>
+        <div style={{flex:1,overflowY:'auto',padding:20}}>
 
           {/* Account detail */}
           {view==='accounts'&&selectedAccount&&(()=>{
