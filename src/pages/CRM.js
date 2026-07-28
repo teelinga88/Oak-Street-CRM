@@ -993,10 +993,10 @@ export default function CRM(){
       </div>
 
       {/* DETAIL PANEL */}
-      <div style={{width:420,borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-        <div style={{minHeight:72,boxSizing:'border-box',padding:'12px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',flexWrap:'wrap',rowGap:8,justifyContent:'space-between',flexShrink:0}}>
+      <div style={{width:420,maxWidth:'38vw',borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
+        <div style={{boxSizing:'border-box',padding:'12px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',gap:8,flexShrink:0}}>
           <h3 style={{fontSize:14,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
-          <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'flex-end'}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             {selId&&view==='accounts'&&(
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openAccountModal(selId)}>✏️ Edit</button>
