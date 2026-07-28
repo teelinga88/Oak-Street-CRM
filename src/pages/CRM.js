@@ -1123,8 +1123,6 @@ export default function CRM(){
             );
           })()}
 
-          {/* Manager detail */}
-
           {/* Bucket lead detail */}
           {view==='bucket'&&selectedLead&&(()=>{
             const l=selectedLead;
