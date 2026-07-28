@@ -319,6 +319,7 @@ export default function CRM(){
   },[sortedAccounts,search,statusFilter,atRiskOnly,daysSortDir]);
   const selectedAccount=useMemo(()=>accounts.find(a=>a.id===selId),[accounts,selId]);
   const selectedDeal=useMemo(()=>deals.find(d=>d.id===selId),[deals,selId]);
+  const selectedLead=useMemo(()=>leads.find(l=>l.id===selId),[leads,selId]);
   const shipmentsPerRep=useMemo(()=>{
     const map={};
     Object.values(TEAM_ROSTER).forEach(r=>{map[r.name]=accounts.filter(a=>a.rep===r.name).reduce((s,a)=>s+(a.shipmentsThisMonth||0),0);});
@@ -795,25 +796,25 @@ export default function CRM(){
               ):(
                 <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12}}>
                   {myLeads.map(lead=>(
-                    <div key={lead.id} style={S.card}>
+                    <div key={lead.id} onClick={()=>setSelId(lead.id)} style={{...S.card,cursor:'pointer',background:lead.id===selId?'#E6F1FB':S.card.background}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
                         <div>
                           <div style={{fontSize:13,fontWeight:600,marginBottom:2}}>{lead.company}</div>
                           {lead.industry&&<div style={{fontSize:11,color:'#555'}}>{lead.industry}</div>}
                           <div style={{fontSize:11,color:'#555'}}>{lead.contact||''}{lead.jobTitle?` — ${lead.jobTitle}`:''}</div>
-                          {lead.email&&<a href={`mailto:${lead.email}`} style={{fontSize:11,color:'#0C447C',textDecoration:'none',display:'block'}}>{lead.email}</a>}
+                          {lead.email&&<a href={`mailto:${lead.email}`} onClick={e=>e.stopPropagation()} style={{fontSize:11,color:'#0C447C',textDecoration:'none',display:'block'}}>{lead.email}</a>}
                           {lead.phone&&<div style={{fontSize:11,color:'#555'}}>{lead.phone}</div>}
                           {(lead.address||lead.location||lead.zip)&&<div style={{fontSize:11,color:'#aaa'}}>{[lead.address,lead.location,lead.zip].filter(Boolean).join(', ')}</div>}
-                          {lead.website&&<a href={lead.website.match(/^https?:\/\//)?lead.website:`https://${lead.website}`} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:'#0C447C',textDecoration:'underline'}}>{lead.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>}
+                          {lead.website&&<a href={lead.website.match(/^https?:\/\//)?lead.website:`https://${lead.website}`} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{fontSize:11,color:'#0C447C',textDecoration:'underline'}}>{lead.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>}
                         </div>
                         <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
                           <span style={{background:'#EEF2FF',color:'#3730A3',borderRadius:20,padding:'2px 8px',fontSize:11,fontWeight:500}}>{lead.attempts||0} att.</span>
-                          <button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Edit this lead's info (fix a bad number, update the contact, etc.)" onClick={()=>openEditLeadModal(lead)}>✏️</button>
-                          {isManager&&<button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('lead',lead.id,lead.rep)}>👤</button>}
+                          <button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Edit this lead's info (fix a bad number, update the contact, etc.)" onClick={e=>{e.stopPropagation();openEditLeadModal(lead);}}>✏️</button>
+                          {isManager&&<button style={{...S.btn,padding:'2px 6px',fontSize:11}} title="Reassign to another rep" onClick={e=>{e.stopPropagation();openReassignModal('lead',lead.id,lead.rep);}}>👤</button>}
                         </div>
                       </div>
                       {lead.notes?.length>0&&<div style={{fontSize:11,color:'#555',background:'#fff',borderRadius:6,padding:'5px 8px',marginBottom:8}}>{lead.notes[0].text} · {lead.notes[0].time}</div>}
-                      <div style={{display:'flex',gap:6}}>
+                      <div style={{display:'flex',gap:6}} onClick={e=>e.stopPropagation()}>
                         <button style={{...S.btn,flex:1,justifyContent:'center',fontSize:11}} onClick={()=>{
                           const notes=[{text:window.prompt('Notes (optional):')||'No contact',time:nowLabel()},...(lead.notes||[])];
                           updateLead(lead.id,{attempts:(lead.attempts||0)+1,notes});showToast('Attempt logged');
@@ -1010,6 +1011,12 @@ export default function CRM(){
                 {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('deal',selId,selectedDeal?.rep)}>👤 Reassign</button>}
               </>
             )}
+            {selId&&view==='bucket'&&selectedLead&&(
+              <>
+                <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openEditLeadModal(selectedLead)}>✏️ Edit lead</button>
+                {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('lead',selId,selectedLead?.rep)}>👤 Reassign</button>}
+              </>
+            )}
           </div>
         </div>
         <div style={{flex:1,overflowY:'auto',padding:14}}>
@@ -1111,6 +1118,39 @@ export default function CRM(){
                       <div><div style={{fontSize:12,color:'#555'}}>{n.text}</div><div style={{fontSize:11,color:'#888',marginTop:2}}>{n.time}</div></div>
                     </div>
                   )):<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No notes yet — click Edit prospect to add</div>}
+                </DetailSection>
+              </>
+            );
+          })()}
+
+          {/* Manager detail */}
+
+          {/* Bucket lead detail */}
+          {view==='bucket'&&selectedLead&&(()=>{
+            const l=selectedLead;
+            return(
+              <>
+                <div style={{fontSize:15,fontWeight:600,marginBottom:2}}>{l.company}</div>
+                {l.industry&&<div style={{fontSize:12,color:'#555',marginBottom:10}}>{l.industry}</div>}
+                <div style={{textAlign:'center',marginBottom:14}}><span style={{background:'#EEF2FF',color:'#3730A3',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:500}}>{l.attempts||0} attempt{l.attempts===1?'':'s'}</span></div>
+                <DetailSection title="Contact info">
+                  {l.contact&&<DetailRow k="Contact" v={l.contact}/>}
+                  {l.jobTitle&&<DetailRow k="Job title" v={l.jobTitle}/>}
+                  {l.email&&<DetailRow k="Email" v={<a href={`mailto:${l.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{l.email}</a>}/>}
+                  {l.phone&&<DetailRow k="Phone" v={l.phone}/>}
+                  {l.address&&<DetailRow k="Address" v={l.address}/>}
+                  {l.location&&<DetailRow k="Location" v={l.location}/>}
+                  {l.zip&&<DetailRow k="Zip" v={l.zip}/>}
+                  {l.website&&<DetailRow k="Website" v={<a href={l.website.match(/^https?:\/\//)?l.website:`https://${l.website}`} target="_blank" rel="noopener noreferrer" style={{color:'#0C447C',textDecoration:'underline'}}>{l.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>}/>}
+                  {!l.contact&&!l.email&&!l.phone&&!l.address&&!l.location&&!l.zip&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info — click Edit lead to add</div>}
+                </DetailSection>
+                <DetailSection title="Attempt history">
+                  {l.notes?.length>0?l.notes.map((n,i)=>(
+                    <div key={i} style={{display:'flex',gap:8,marginBottom:10}}>
+                      <div style={{width:7,height:7,borderRadius:'50%',background:'#D5D4CF',flexShrink:0,marginTop:4}}/>
+                      <div><div style={{fontSize:12,color:'#555'}}>{n.text}</div><div style={{fontSize:11,color:'#888',marginTop:2}}>{n.time}</div></div>
+                    </div>
+                  )):<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No attempts logged yet — click 📵 Attempted on the card to log one (each one is time-stamped).</div>}
                 </DetailSection>
               </>
             );
