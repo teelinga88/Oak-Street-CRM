@@ -320,6 +320,7 @@ export default function CRM(){
   const selectedAccount=useMemo(()=>accounts.find(a=>a.id===selId),[accounts,selId]);
   const selectedDeal=useMemo(()=>deals.find(d=>d.id===selId),[deals,selId]);
   const selectedLead=useMemo(()=>leads.find(l=>l.id===selId),[leads,selId]);
+  const selectedFollowup=useMemo(()=>followups.find(f=>f.id===selId),[followups,selId]);
   const shipmentsPerRep=useMemo(()=>{
     const map={};
     Object.values(TEAM_ROSTER).forEach(r=>{map[r.name]=accounts.filter(a=>a.rep===r.name).reduce((s,a)=>s+(a.shipmentsThisMonth||0),0);});
@@ -868,9 +869,9 @@ export default function CRM(){
                   const fuEmail=linkedAcct?.email||linkedDeal?.email||f.email;
                   const fuPhone=linkedAcct?.phone||linkedDeal?.phone||f.phone;
                   return(
-                  <div style={{border:'0.5px solid #E5E4DF',borderRadius:10,padding:12,marginBottom:8,background:'#fff'}}>
+                  <div onClick={()=>setSelId(f.id)} style={{border:f.id===selId?'1px solid #0C447C':'0.5px solid #E5E4DF',borderRadius:10,padding:12,marginBottom:8,background:f.id===selId?'#E6F1FB':'#fff',cursor:'pointer'}}>
                     <div style={{display:'flex',gap:10}}>
-                      <input type="checkbox" checked={f.done} onChange={async e=>{await updateFollowup(f.id,{done:e.target.checked,completedAt:e.target.checked?today():null});}} style={{flexShrink:0,width:15,height:15,cursor:'pointer',marginTop:2}}/>
+                      <input type="checkbox" checked={f.done} onClick={e=>e.stopPropagation()} onChange={async e=>{await updateFollowup(f.id,{done:e.target.checked,completedAt:e.target.checked?today():null});}} style={{flexShrink:0,width:15,height:15,cursor:'pointer',marginTop:2}}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:600,textDecoration:f.done?'line-through':'none',color:f.done?'#aaa':'#1a1a1a'}}>{f.account}</div>
                         {fuContact&&<div style={{fontSize:11,color:'#555',marginTop:1}}>{fuContact}</div>}
@@ -882,7 +883,7 @@ export default function CRM(){
                         </div>
                       </div>
                     </div>
-                    {!f.done&&(f.accountId||f.dealId)&&<div style={{marginTop:8}}><button style={{...S.btnLog,width:'100%',justifyContent:'center',fontSize:11}} onClick={()=>openLogModal(f.accountId,f.id,f.dealId)}>✏️ Log what happened</button></div>}
+                    {!f.done&&(f.accountId||f.dealId)&&<div style={{marginTop:8}}><button style={{...S.btnLog,width:'100%',justifyContent:'center',fontSize:11}} onClick={e=>{e.stopPropagation();openLogModal(f.accountId,f.id,f.dealId);}}>✏️ Log what happened</button></div>}
                   </div>
                   );
                 };
@@ -995,9 +996,9 @@ export default function CRM(){
       {/* DETAIL PANEL */}
       <div style={{width:420,maxWidth:'38vw',borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
         <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-          <h3 style={{fontSize:14,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':'Detail'}</h3>
+          <h3 style={{fontSize:14,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':view==='followups'?'Follow-up detail':'Detail'}</h3>
         </div>
-        {((selId&&view==='accounts')||(selId&&view==='pipeline')||(selId&&view==='bucket'&&selectedLead))&&(
+        {((selId&&view==='accounts')||(selId&&view==='pipeline')||(selId&&view==='bucket'&&selectedLead)||(selId&&view==='followups'&&selectedFollowup))&&(
           <div style={{boxSizing:'border-box',padding:'10px 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',gap:8,flexWrap:'wrap',flexShrink:0}}>
             {selId&&view==='accounts'&&(
               <>
@@ -1017,6 +1018,12 @@ export default function CRM(){
               <>
                 <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openEditLeadModal(selectedLead)}>✏️ Edit lead</button>
                 {isManager&&<button style={{...S.btn,padding:'4px 8px',fontSize:11}} title="Reassign to another rep" onClick={()=>openReassignModal('lead',selId,selectedLead?.rep)}>👤 Reassign</button>}
+              </>
+            )}
+            {selId&&view==='followups'&&selectedFollowup&&(
+              <>
+                <button style={{...S.btn,padding:'4px 10px',fontSize:11}} onClick={()=>openFollowupModal(selId)}>✏️ Edit follow-up</button>
+                {!selectedFollowup.done&&(selectedFollowup.accountId||selectedFollowup.dealId)&&<button style={{...S.btnLog,padding:'4px 10px',fontSize:11}} onClick={()=>openLogModal(selectedFollowup.accountId,selectedFollowup.id,selectedFollowup.dealId)}>✏️ Log what happened</button>}
               </>
             )}
           </div>
@@ -1152,6 +1159,38 @@ export default function CRM(){
                     </div>
                   )):<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No attempts logged yet — click 📵 Attempted on the card to log one (each one is time-stamped).</div>}
                 </DetailSection>
+              </>
+            );
+          })()}
+
+          {/* Follow-up detail */}
+          {view==='followups'&&selectedFollowup&&(()=>{
+            const f=selectedFollowup;
+            const linkedAcct=f.accountId?accounts.find(a=>a.id===f.accountId):null;
+            const linkedDeal=f.dealId?deals.find(d=>d.id===f.dealId):null;
+            const fuContact=linkedAcct?.contact||linkedDeal?.contact||f.contact;
+            const fuEmail=linkedAcct?.email||linkedDeal?.email||f.email;
+            const fuPhone=linkedAcct?.phone||linkedDeal?.phone||f.phone;
+            const overdue=!f.done&&f.dueDate<today();
+            return(
+              <>
+                <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>{f.account}</div>
+                <div style={{textAlign:'center',marginBottom:14}}>
+                  <span style={{background:f.done?'#EEF2FF':overdue?'#FCEBEB':'#FAEEDA',color:f.done?'#3730A3':overdue?'#A32D2D':'#633806',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:500}}>
+                    {f.done?'✓ Done':overdue?'⚠ Overdue':'🕐 Scheduled'} · {fmtDate(f.dueDate)}
+                  </span>
+                </div>
+                <DetailSection title="Contact info">
+                  {fuContact&&<DetailRow k="Contact" v={fuContact}/>}
+                  {fuEmail&&<DetailRow k="Email" v={<a href={`mailto:${fuEmail}`} style={{color:'#0C447C',textDecoration:'none'}}>{fuEmail}</a>}/>}
+                  {fuPhone&&<DetailRow k="Phone" v={fuPhone}/>}
+                  {!fuContact&&!fuEmail&&!fuPhone&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info on file</div>}
+                </DetailSection>
+                {(linkedAcct||linkedDeal)&&<DetailSection title="Linked record">
+                  {linkedAcct&&<DetailRow k="Account" v={linkedAcct.name}/>}
+                  {linkedDeal&&<DetailRow k="Prospect" v={linkedDeal.account}/>}
+                </DetailSection>}
+                {f.notes&&<DetailSection title="Notes"><p style={{fontSize:12,color:'#555',lineHeight:1.5}}>"{f.notes}"</p></DetailSection>}
               </>
             );
           })()}
