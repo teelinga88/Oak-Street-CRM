@@ -12,6 +12,7 @@ const daysAgo = iso => { if(!iso) return '—'; const d=Math.floor((Date.now()-n
 const daysSince = iso => { if(!iso) return null; return Math.floor((Date.now()-new Date(iso))/(864e5)); };
 const isThisMonth = iso => { if(!iso) return false; const d=new Date(iso); const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth(); };
 const fmtMoney = n => { const v=Number(n)||0; return v<0 ? '-$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}) : '$'+v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); };
+const formatPhone = v => { const d=(v||'').replace(/\D/g,'').slice(0,10); if(d.length<4) return d; if(d.length<7) return d.slice(0,3)+'-'+d.slice(3); return d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6); };
 const isAtRisk = a => { const d = daysSince(a.lastShipmentDate); return d === null ? false : d >= 60; };
 
 function getMonthKey(offset=0) {
@@ -1268,7 +1269,7 @@ export default function CRM(){
           <FRow label="Status"><select style={S.input} value={af.status||'Active'} onChange={e=>setAf({...af,status:e.target.value})}>{ACCT_STATUSES.map(s=><option key={s}>{s}</option>)}</select></FRow>
           <FRow label="Primary contact"><input style={S.input} value={af.contact||''} onChange={e=>setAf({...af,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={af.email||''} onChange={e=>setAf({...af,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={af.phone||''} onChange={e=>setAf({...af,phone:e.target.value})} placeholder="(555) 000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={af.phone||''} onChange={e=>setAf({...af,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Shipment Type"><input style={S.input} value={af.shipmentType||''} onChange={e=>setAf({...af,shipmentType:e.target.value})} placeholder="FTL Dry Van, LTL, Reefer"/></FRow>
           <FRow label="Commodity"><input style={S.input} value={af.commodity||''} onChange={e=>setAf({...af,commodity:e.target.value})} placeholder="General freight"/></FRow>
           <FRow label="Notes"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={af.notes||''} onChange={e=>setAf({...af,notes:e.target.value})} placeholder="Notes…"/></FRow>
@@ -1286,7 +1287,7 @@ export default function CRM(){
                   <div style={{fontSize:11,fontWeight:500,color:'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:10}}>📇 Account info</div>
                   <FRow label="Contact name"><input style={S.input} value={df.contact||''} onChange={e=>setDf({...df,contact:e.target.value})} placeholder="John Smith"/></FRow>
                   <FRow label="Email"><input style={S.input} type="email" value={df.email||''} onChange={e=>setDf({...df,email:e.target.value})} placeholder="john@company.com"/></FRow>
-                  <FRow label="Phone"><input style={S.input} value={df.phone||''} onChange={e=>setDf({...df,phone:e.target.value})} placeholder="555-000-0000"/></FRow>
+                  <FRow label="Phone"><input style={S.input} value={df.phone||''} onChange={e=>setDf({...df,phone:formatPhone(e.target.value)})} placeholder="555-000-0000"/></FRow>
                   <FRow label="Address"><input style={S.input} value={df.address||''} onChange={e=>setDf({...df,address:e.target.value})} placeholder="123 Main St"/></FRow>
                   <FGrid>
                     <FRow label="City, State"><input style={S.input} value={df.location||''} onChange={e=>setDf({...df,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
@@ -1309,7 +1310,7 @@ export default function CRM(){
                   <div style={{fontSize:11,fontWeight:500,color:'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:10}}>👤 Prospect details (optional)</div>
                   <FRow label="Contact name"><input style={S.input} value={df.npContact||''} onChange={e=>setDf({...df,npContact:e.target.value})} placeholder="John Smith"/></FRow>
                   <FRow label="Email"><input style={S.input} type="email" value={df.npEmail||''} onChange={e=>setDf({...df,npEmail:e.target.value})} placeholder="john@company.com"/></FRow>
-                  <FRow label="Phone"><input style={S.input} value={df.npPhone||''} onChange={e=>setDf({...df,npPhone:e.target.value})} placeholder="(555) 000-0000"/></FRow>
+                  <FRow label="Phone"><input style={S.input} value={df.npPhone||''} onChange={e=>setDf({...df,npPhone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
                   <FGrid>
                     <FRow label="City, State"><input style={S.input} value={df.npLocation||''} onChange={e=>setDf({...df,npLocation:e.target.value})} placeholder="Chicago, IL"/></FRow>
                     <FRow label="Industry"><input style={S.input} value={df.npIndustry||''} onChange={e=>setDf({...df,npIndustry:e.target.value})} placeholder="Manufacturing"/></FRow>
@@ -1346,7 +1347,7 @@ export default function CRM(){
           <FRow label="Due date *"><input style={S.input} type="date" value={ff.dueDate||''} onChange={e=>setFf({...ff,dueDate:e.target.value})}/></FRow>
           <FRow label="Contact name"><input style={S.input} value={ff.contact||''} onChange={e=>setFf({...ff,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={ff.email||''} onChange={e=>setFf({...ff,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={ff.phone||''} onChange={e=>setFf({...ff,phone:e.target.value})} placeholder="555-000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={ff.phone||''} onChange={e=>setFf({...ff,phone:formatPhone(e.target.value)})} placeholder="555-000-0000"/></FRow>
           <FRow label="Notes"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={ff.notes||''} onChange={e=>setFf({...ff,notes:e.target.value})} placeholder="What to follow up about…"/></FRow>
         </Modal>
       )}
@@ -1364,7 +1365,7 @@ export default function CRM(){
           <FRow label="Company name *"><input style={S.input} value={bucketForm.company||''} onChange={e=>setBucketForm({...bucketForm,company:e.target.value})} placeholder="Acme Corp" autoFocus/></FRow>
           <FRow label="Contact name"><input style={S.input} value={bucketForm.contact||''} onChange={e=>setBucketForm({...bucketForm,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={bucketForm.email||''} onChange={e=>setBucketForm({...bucketForm,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:e.target.value})} placeholder="(555) 000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Location"><input style={S.input} value={bucketForm.location||''} onChange={e=>setBucketForm({...bucketForm,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
           <FRow label="Address"><input style={S.input} value={bucketForm.address||''} onChange={e=>setBucketForm({...bucketForm,address:e.target.value})} placeholder="123 Main St"/></FRow>
           <FRow label="Zip"><input style={S.input} value={bucketForm.zip||''} onChange={e=>setBucketForm({...bucketForm,zip:e.target.value})} placeholder="60601"/></FRow>
@@ -1379,7 +1380,7 @@ export default function CRM(){
           <FRow label="Company name *"><input style={S.input} value={bucketForm.company||''} onChange={e=>setBucketForm({...bucketForm,company:e.target.value})} placeholder="Acme Corp" autoFocus/></FRow>
           <FRow label="Contact name"><input style={S.input} value={bucketForm.contact||''} onChange={e=>setBucketForm({...bucketForm,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={bucketForm.email||''} onChange={e=>setBucketForm({...bucketForm,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:e.target.value})} placeholder="(555) 000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Location"><input style={S.input} value={bucketForm.location||''} onChange={e=>setBucketForm({...bucketForm,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
           <FRow label="Address"><input style={S.input} value={bucketForm.address||''} onChange={e=>setBucketForm({...bucketForm,address:e.target.value})} placeholder="123 Main St"/></FRow>
           <FRow label="Zip"><input style={S.input} value={bucketForm.zip||''} onChange={e=>setBucketForm({...bucketForm,zip:e.target.value})} placeholder="60601"/></FRow>
