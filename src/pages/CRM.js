@@ -805,7 +805,7 @@ export default function CRM(){
                           {lead.industry&&<div style={{fontSize:11,color:'#555'}}>{lead.industry}</div>}
                           <div style={{fontSize:11,color:'#555'}}>{lead.contact||''}{lead.jobTitle?` — ${lead.jobTitle}`:''}</div>
                           {lead.email&&<a href={`mailto:${lead.email}`} onClick={e=>e.stopPropagation()} style={{fontSize:11,color:'#0C447C',textDecoration:'none',display:'block'}}>{lead.email}</a>}
-                          {lead.phone&&<div style={{fontSize:11,color:'#555'}}>{lead.phone}</div>}
+                          {lead.phone&&<div style={{fontSize:11,color:'#555'}}>{formatPhone(lead.phone)}</div>}
                           {(lead.address||lead.location||lead.zip)&&<div style={{fontSize:11,color:'#aaa'}}>{[lead.address,lead.location,lead.zip].filter(Boolean).join(', ')}</div>}
                           {lead.website&&<a href={lead.website.match(/^https?:\/\//)?lead.website:`https://${lead.website}`} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{fontSize:11,color:'#0C447C',textDecoration:'underline'}}>{lead.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>}
                         </div>
@@ -876,7 +876,7 @@ export default function CRM(){
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:600,textDecoration:f.done?'line-through':'none',color:f.done?'#aaa':'#1a1a1a'}}>{f.account}</div>
                         {fuContact&&<div style={{fontSize:11,color:'#555',marginTop:1}}>{fuContact}</div>}
-                        {fuPhone&&<div style={{fontSize:11,color:'#555',marginTop:1}}>{fuPhone}</div>}
+                        {fuPhone&&<div style={{fontSize:11,color:'#555',marginTop:1}}>{formatPhone(fuPhone)}</div>}
                         {fuEmail&&<div style={{fontSize:11,color:'#0C447C',marginTop:1}}>{fuEmail}</div>}
                         {f.notes&&<div style={{fontSize:11,color:'#555',marginTop:3,fontStyle:'italic'}}>"{f.notes}"</div>}
                         <div style={{fontSize:11,color:!f.done&&f.dueDate<today()?'#A32D2D':'#888',marginTop:4,fontWeight:!f.done&&f.dueDate<today()?600:400}}>
@@ -1074,7 +1074,7 @@ export default function CRM(){
                 <DetailSection title="Contact info">
                   {a.contact&&<DetailRow k="Contact" v={a.contact}/>}
                   {a.email&&<DetailRow k="Email" v={<a href={`mailto:${a.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a.email}</a>}/>}
-                  {a.phone&&<DetailRow k="Phone" v={a.phone}/>}
+                  {a.phone&&<DetailRow k="Phone" v={formatPhone(a.phone)}/>}
                   {a.address&&<DetailRow k="Address" v={a.address}/>}
                   {a.location&&<DetailRow k="Location" v={a.location}/>}
                   {a.zip&&<DetailRow k="Zip" v={a.zip}/>}
@@ -1115,7 +1115,7 @@ export default function CRM(){
                 <DetailSection title="Account info">
                   {(a?.contact||d.contact)&&<DetailRow k="Contact" v={a?.contact||d.contact}/>}
                   <DetailRow k="Email" v={(a?.email||d.email)?<a href={`mailto:${a?.email||d.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a?.email||d.email}</a>:<span style={{color:'#bbb'}}>Not set — click Edit prospect to add</span>}/>
-                  {(a?.phone||d.phone)&&<DetailRow k="Phone" v={a?.phone||d.phone}/>}
+                  {(a?.phone||d.phone)&&<DetailRow k="Phone" v={formatPhone(a?.phone||d.phone)}/>}
                   {a?.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
                   {d.address&&<DetailRow k="Address" v={d.address}/>}
                   {(a?.location||d.location)&&<DetailRow k="Location" v={a?.location||d.location}/>}
@@ -1145,7 +1145,7 @@ export default function CRM(){
                   {l.contact&&<DetailRow k="Contact" v={l.contact}/>}
                   {l.jobTitle&&<DetailRow k="Job title" v={l.jobTitle}/>}
                   {l.email&&<DetailRow k="Email" v={<a href={`mailto:${l.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{l.email}</a>}/>}
-                  {l.phone&&<DetailRow k="Phone" v={l.phone}/>}
+                  {l.phone&&<DetailRow k="Phone" v={formatPhone(l.phone)}/>}
                   {l.address&&<DetailRow k="Address" v={l.address}/>}
                   {l.location&&<DetailRow k="Location" v={l.location}/>}
                   {l.zip&&<DetailRow k="Zip" v={l.zip}/>}
@@ -1184,7 +1184,7 @@ export default function CRM(){
                 <DetailSection title="Contact info">
                   {fuContact&&<DetailRow k="Contact" v={fuContact}/>}
                   {fuEmail&&<DetailRow k="Email" v={<a href={`mailto:${fuEmail}`} style={{color:'#0C447C',textDecoration:'none'}}>{fuEmail}</a>}/>}
-                  {fuPhone&&<DetailRow k="Phone" v={fuPhone}/>}
+                  {fuPhone&&<DetailRow k="Phone" v={formatPhone(fuPhone)}/>}
                   {!fuContact&&!fuEmail&&!fuPhone&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info on file</div>}
                 </DetailSection>
                 {(linkedAcct||linkedDeal)&&<DetailSection title="Linked record">
@@ -1269,7 +1269,7 @@ export default function CRM(){
           <FRow label="Status"><select style={S.input} value={af.status||'Active'} onChange={e=>setAf({...af,status:e.target.value})}>{ACCT_STATUSES.map(s=><option key={s}>{s}</option>)}</select></FRow>
           <FRow label="Primary contact"><input style={S.input} value={af.contact||''} onChange={e=>setAf({...af,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={af.email||''} onChange={e=>setAf({...af,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={af.phone||''} onChange={e=>setAf({...af,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={formatPhone(af.phone||'')} onChange={e=>setAf({...af,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Shipment Type"><input style={S.input} value={af.shipmentType||''} onChange={e=>setAf({...af,shipmentType:e.target.value})} placeholder="FTL Dry Van, LTL, Reefer"/></FRow>
           <FRow label="Commodity"><input style={S.input} value={af.commodity||''} onChange={e=>setAf({...af,commodity:e.target.value})} placeholder="General freight"/></FRow>
           <FRow label="Notes"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={af.notes||''} onChange={e=>setAf({...af,notes:e.target.value})} placeholder="Notes…"/></FRow>
@@ -1287,7 +1287,7 @@ export default function CRM(){
                   <div style={{fontSize:11,fontWeight:500,color:'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:10}}>📇 Account info</div>
                   <FRow label="Contact name"><input style={S.input} value={df.contact||''} onChange={e=>setDf({...df,contact:e.target.value})} placeholder="John Smith"/></FRow>
                   <FRow label="Email"><input style={S.input} type="email" value={df.email||''} onChange={e=>setDf({...df,email:e.target.value})} placeholder="john@company.com"/></FRow>
-                  <FRow label="Phone"><input style={S.input} value={df.phone||''} onChange={e=>setDf({...df,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
+                  <FRow label="Phone"><input style={S.input} value={formatPhone(df.phone||'')} onChange={e=>setDf({...df,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
                   <FRow label="Address"><input style={S.input} value={df.address||''} onChange={e=>setDf({...df,address:e.target.value})} placeholder="123 Main St"/></FRow>
                   <FGrid>
                     <FRow label="City, State"><input style={S.input} value={df.location||''} onChange={e=>setDf({...df,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
@@ -1310,7 +1310,7 @@ export default function CRM(){
                   <div style={{fontSize:11,fontWeight:500,color:'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:10}}>👤 Prospect details (optional)</div>
                   <FRow label="Contact name"><input style={S.input} value={df.npContact||''} onChange={e=>setDf({...df,npContact:e.target.value})} placeholder="John Smith"/></FRow>
                   <FRow label="Email"><input style={S.input} type="email" value={df.npEmail||''} onChange={e=>setDf({...df,npEmail:e.target.value})} placeholder="john@company.com"/></FRow>
-                  <FRow label="Phone"><input style={S.input} value={df.npPhone||''} onChange={e=>setDf({...df,npPhone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
+                  <FRow label="Phone"><input style={S.input} value={formatPhone(df.npPhone||'')} onChange={e=>setDf({...df,npPhone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
                   <FGrid>
                     <FRow label="City, State"><input style={S.input} value={df.npLocation||''} onChange={e=>setDf({...df,npLocation:e.target.value})} placeholder="Chicago, IL"/></FRow>
                     <FRow label="Industry"><input style={S.input} value={df.npIndustry||''} onChange={e=>setDf({...df,npIndustry:e.target.value})} placeholder="Manufacturing"/></FRow>
@@ -1347,7 +1347,7 @@ export default function CRM(){
           <FRow label="Due date *"><input style={S.input} type="date" value={ff.dueDate||''} onChange={e=>setFf({...ff,dueDate:e.target.value})}/></FRow>
           <FRow label="Contact name"><input style={S.input} value={ff.contact||''} onChange={e=>setFf({...ff,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={ff.email||''} onChange={e=>setFf({...ff,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={ff.phone||''} onChange={e=>setFf({...ff,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={formatPhone(ff.phone||'')} onChange={e=>setFf({...ff,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Notes"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={ff.notes||''} onChange={e=>setFf({...ff,notes:e.target.value})} placeholder="What to follow up about…"/></FRow>
         </Modal>
       )}
@@ -1365,7 +1365,7 @@ export default function CRM(){
           <FRow label="Company name *"><input style={S.input} value={bucketForm.company||''} onChange={e=>setBucketForm({...bucketForm,company:e.target.value})} placeholder="Acme Corp" autoFocus/></FRow>
           <FRow label="Contact name"><input style={S.input} value={bucketForm.contact||''} onChange={e=>setBucketForm({...bucketForm,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={bucketForm.email||''} onChange={e=>setBucketForm({...bucketForm,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={formatPhone(bucketForm.phone||'')} onChange={e=>setBucketForm({...bucketForm,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Location"><input style={S.input} value={bucketForm.location||''} onChange={e=>setBucketForm({...bucketForm,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
           <FRow label="Address"><input style={S.input} value={bucketForm.address||''} onChange={e=>setBucketForm({...bucketForm,address:e.target.value})} placeholder="123 Main St"/></FRow>
           <FRow label="Zip"><input style={S.input} value={bucketForm.zip||''} onChange={e=>setBucketForm({...bucketForm,zip:e.target.value})} placeholder="60601"/></FRow>
@@ -1380,7 +1380,7 @@ export default function CRM(){
           <FRow label="Company name *"><input style={S.input} value={bucketForm.company||''} onChange={e=>setBucketForm({...bucketForm,company:e.target.value})} placeholder="Acme Corp" autoFocus/></FRow>
           <FRow label="Contact name"><input style={S.input} value={bucketForm.contact||''} onChange={e=>setBucketForm({...bucketForm,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={bucketForm.email||''} onChange={e=>setBucketForm({...bucketForm,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={bucketForm.phone||''} onChange={e=>setBucketForm({...bucketForm,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={formatPhone(bucketForm.phone||'')} onChange={e=>setBucketForm({...bucketForm,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Location"><input style={S.input} value={bucketForm.location||''} onChange={e=>setBucketForm({...bucketForm,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
           <FRow label="Address"><input style={S.input} value={bucketForm.address||''} onChange={e=>setBucketForm({...bucketForm,address:e.target.value})} placeholder="123 Main St"/></FRow>
           <FRow label="Zip"><input style={S.input} value={bucketForm.zip||''} onChange={e=>setBucketForm({...bucketForm,zip:e.target.value})} placeholder="60601"/></FRow>
