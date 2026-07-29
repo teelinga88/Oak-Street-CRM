@@ -12,7 +12,7 @@ const daysAgo = iso => { if(!iso) return '—'; const d=Math.floor((Date.now()-n
 const daysSince = iso => { if(!iso) return null; return Math.floor((Date.now()-new Date(iso))/(864e5)); };
 const isThisMonth = iso => { if(!iso) return false; const d=new Date(iso); const n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth(); };
 const fmtMoney = n => { const v=Number(n)||0; return v<0 ? '-$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}) : '$'+v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); };
-const formatPhone = v => { const d=(v||'').replace(/\D/g,'').slice(0,10); if(d.length<4) return d; if(d.length<7) return d.slice(0,3)+'-'+d.slice(3); return d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6); };
+const formatPhone = v => { const d=(v||'').replace(/\D/g,'').slice(0,10); if(d.length===0) return ''; if(d.length<4) return '('+d; if(d.length<7) return '('+d.slice(0,3)+') '+d.slice(3); return '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6); };
 const isAtRisk = a => { const d = daysSince(a.lastShipmentDate); return d === null ? false : d >= 60; };
 
 function getMonthKey(offset=0) {
@@ -1287,7 +1287,7 @@ export default function CRM(){
                   <div style={{fontSize:11,fontWeight:500,color:'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:10}}>📇 Account info</div>
                   <FRow label="Contact name"><input style={S.input} value={df.contact||''} onChange={e=>setDf({...df,contact:e.target.value})} placeholder="John Smith"/></FRow>
                   <FRow label="Email"><input style={S.input} type="email" value={df.email||''} onChange={e=>setDf({...df,email:e.target.value})} placeholder="john@company.com"/></FRow>
-                  <FRow label="Phone"><input style={S.input} value={df.phone||''} onChange={e=>setDf({...df,phone:formatPhone(e.target.value)})} placeholder="555-000-0000"/></FRow>
+                  <FRow label="Phone"><input style={S.input} value={df.phone||''} onChange={e=>setDf({...df,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
                   <FRow label="Address"><input style={S.input} value={df.address||''} onChange={e=>setDf({...df,address:e.target.value})} placeholder="123 Main St"/></FRow>
                   <FGrid>
                     <FRow label="City, State"><input style={S.input} value={df.location||''} onChange={e=>setDf({...df,location:e.target.value})} placeholder="Chicago, IL"/></FRow>
@@ -1347,7 +1347,7 @@ export default function CRM(){
           <FRow label="Due date *"><input style={S.input} type="date" value={ff.dueDate||''} onChange={e=>setFf({...ff,dueDate:e.target.value})}/></FRow>
           <FRow label="Contact name"><input style={S.input} value={ff.contact||''} onChange={e=>setFf({...ff,contact:e.target.value})} placeholder="John Smith"/></FRow>
           <FRow label="Email"><input style={S.input} type="email" value={ff.email||''} onChange={e=>setFf({...ff,email:e.target.value})} placeholder="john@company.com"/></FRow>
-          <FRow label="Phone"><input style={S.input} value={ff.phone||''} onChange={e=>setFf({...ff,phone:formatPhone(e.target.value)})} placeholder="555-000-0000"/></FRow>
+          <FRow label="Phone"><input style={S.input} value={ff.phone||''} onChange={e=>setFf({...ff,phone:formatPhone(e.target.value)})} placeholder="(555) 000-0000"/></FRow>
           <FRow label="Notes"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={ff.notes||''} onChange={e=>setFf({...ff,notes:e.target.value})} placeholder="What to follow up about…"/></FRow>
         </Modal>
       )}
