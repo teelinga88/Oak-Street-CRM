@@ -491,7 +491,7 @@ export default function CRM(){
     await updateLead(modal.id,{
       company:bucketForm.company,contact:bucketForm.contact||'',email:bucketForm.email||'',phone:bucketForm.phone||'',
       location:bucketForm.location||'',address:bucketForm.address||'',zip:bucketForm.zip||'',industry:bucketForm.industry||'',
-      jobTitle:bucketForm.jobTitle||'',website:bucketForm.website||'',
+      jobTitle:bucketForm.jobTitle||'',website:bucketForm.website||'',leadNotes:bucketForm.leadNotes||'',
     });
     setModal(null);showToast('Lead updated!');
   }
@@ -1155,6 +1155,7 @@ export default function CRM(){
                   {l.website&&<DetailRow k="Website" v={<a href={l.website.match(/^https?:\/\//)?l.website:`https://${l.website}`} target="_blank" rel="noopener noreferrer" style={{color:'#0C447C',textDecoration:'underline'}}>{l.website.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>}/>}
                   {!l.contact&&!l.email&&!l.phone&&!l.address&&!l.location&&!l.zip&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info — click Edit lead to add</div>}
                 </DetailSection>
+                {l.leadNotes&&<DetailSection title="Notes"><p style={{fontSize:12,color:'#555',lineHeight:1.5}}>{l.leadNotes}</p></DetailSection>}
                 <DetailSection title="Attempt history">
                   {l.notes?.length>0?l.notes.map((n,i)=>(
                     <div key={i} style={{display:'flex',gap:8,marginBottom:10}}>
@@ -1450,6 +1451,7 @@ export default function CRM(){
           <FRow label="Industry"><input style={S.input} value={bucketForm.industry||''} onChange={e=>setBucketForm({...bucketForm,industry:e.target.value})} placeholder="Manufacturing"/></FRow>
           <FRow label="Job title"><input style={S.input} value={bucketForm.jobTitle||''} onChange={e=>setBucketForm({...bucketForm,jobTitle:e.target.value})} placeholder="Logistics Manager"/></FRow>
           <FRow label="Website"><input style={S.input} value={bucketForm.website||''} onChange={e=>setBucketForm({...bucketForm,website:e.target.value})} placeholder="www.company.com"/></FRow>
+          <FRow label="Notes"><textarea style={{...S.input,minHeight:60,resize:'vertical'}} value={bucketForm.leadNotes||''} onChange={e=>setBucketForm({...bucketForm,leadNotes:e.target.value})} placeholder="Notes about this lead…"/></FRow>
         </Modal>
       )}
 
