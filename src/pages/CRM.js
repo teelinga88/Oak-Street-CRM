@@ -1170,28 +1170,88 @@ export default function CRM(){
             const f=selectedFollowup;
             const linkedAcct=f.accountId?accounts.find(a=>a.id===f.accountId):null;
             const linkedDeal=f.dealId?deals.find(d=>d.id===f.dealId):null;
-            const fuContact=linkedAcct?.contact||linkedDeal?.contact||f.contact;
-            const fuEmail=linkedAcct?.email||linkedDeal?.email||f.email;
-            const fuPhone=linkedAcct?.phone||linkedDeal?.phone||f.phone;
             const overdue=!f.done&&f.dueDate<today();
+            const fuStatusBadge=(
+              <div style={{textAlign:'center',marginBottom:14}}>
+                <span style={{background:f.done?'#EEF2FF':overdue?'#FCEBEB':'#FAEEDA',color:f.done?'#3730A3':overdue?'#A32D2D':'#633806',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:500}}>
+                  {f.done?'✓ Done':overdue?'⚠ Overdue':'🕐 Scheduled'} · {fmtDate(f.dueDate)}
+                </span>
+              </div>
+            );
+            if(linkedAcct){
+              const a=linkedAcct;
+              const[bg,fg]=acctColor(a.name);
+              const atRisk=isAtRisk(a);
+              const shipCount=a.shipmentsThisMonth||0;
+              const dSince=daysSince(a.lastShipmentDate);
+              const trend=getTrending(a);
+              return(
+                <>
+                  <div style={{textAlign:'center',marginBottom:14}}>
+                    <div style={{width:40,height:40,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:600,background:bg,color:fg,margin:'0 auto 8px'}}>{initials(a.name)}</div>
+                    <div style={{fontSize:15,fontWeight:600}}>{a.name}</div>
+                    <div style={{fontSize:12,color:'#555'}}>{a.industry||''}{a.location?' · '+a.location:''}</div>
+                    <span style={{...badgeStyle(atRisk?'At risk':a.status),padding:'2px 8px',borderRadius:20,fontSize:11,fontWeight:500,marginTop:4,display:'inline-block'}}>{atRisk?'At risk':a.status}</span>
+                  </div>
+                  {fuStatusBadge}
+                  <div style={{background:atRisk?'#FCEBEB':'#E6F1FB',border:`0.5px solid ${atRisk?'#F09595':'#A8C8F0'}`,borderRadius:8,padding:'10px 12px',marginBottom:14}}>
+                    <div style={{fontSize:10,fontWeight:500,color:atRisk?'#A32D2D':'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:6}}>{atRisk?'⚠ At Risk':'📦 Shipments'}</div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <div>
+                        <div style={{fontSize:20,fontWeight:700,color:atRisk?'#A32D2D':'#0C447C'}}>{shipCount}</div>
+                        <div style={{fontSize:10,color:atRisk?'#A32D2D':'#0C447C',opacity:.8}}>this month</div>
+                      </div>
+                      {trend&&<div style={{textAlign:'center'}}>
+                        {trend.dir!=='flat'&&<div style={{fontSize:14,fontWeight:700,color:trend.dir==='up'?'#3B6D11':'#A32D2D'}}>{trend.dir==='up'?'↑':'↓'} {trend.pct}%</div>}
+                        <div style={{fontSize:10,color:'#aaa'}}>vs last month</div>
+                      </div>}
+                      {a.lastShipmentDate&&<div style={{textAlign:'right'}}>
+                        <div style={{fontSize:11,color:atRisk?'#A32D2D':'#888',fontWeight:atRisk?600:400}}>{atRisk?`${dSince} days ago`:daysAgo(a.lastShipmentDate)}</div>
+                        <div style={{fontSize:10,color:'#aaa'}}>last shipment</div>
+                      </div>}
+                    </div>
+                    {atRisk&&<div style={{fontSize:11,color:'#A32D2D',marginTop:6,fontWeight:500}}>No shipment in {dSince} days — follow up!</div>}
+                  </div>
+                  <DetailSection title="Contact info">
+                    {a.contact&&<DetailRow k="Contact" v={a.contact}/>}
+                    {a.email&&<DetailRow k="Email" v={<a href={`mailto:${a.email}`} style={{color:'#0C447C',textDecoration:'none'}}>{a.email}</a>}/>}
+                    {a.phone&&<DetailRow k="Phone" v={formatPhone(a.phone)}/>}
+                    {a.address&&<DetailRow k="Address" v={a.address}/>}
+                    {a.location&&<DetailRow k="Location" v={a.location}/>}
+                    {a.zip&&<DetailRow k="Zip" v={a.zip}/>}
+                    {!a.contact&&!a.email&&!a.phone&&!a.address&&!a.location&&!a.zip&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info yet</div>}
+                  </DetailSection>
+                  {(a.shipmentType||a.commodity)&&<DetailSection title="Shipment info">
+                    {a.shipmentType&&<DetailRow k="Shipment Type" v={a.shipmentType}/>}
+                    {a.commodity&&<DetailRow k="Commodity" v={a.commodity}/>}
+                  </DetailSection>}
+                  {a.notes&&<DetailSection title="Notes"><p style={{fontSize:12,color:'#555',lineHeight:1.5}}>{a.notes}</p></DetailSection>}
+                  {a.activities?.length>0&&<DetailSection title="Activity log">
+                    {a.activities.map((act,i)=>(
+                      <div key={i} style={{display:'flex',gap:8,marginBottom:10}}>
+                        <div style={{width:7,height:7,borderRadius:'50%',background:'#D5D4CF',flexShrink:0,marginTop:4}}/>
+                        <div><div style={{fontSize:12,color:'#555',lineHeight:1.5}}>{act.text}</div><div style={{fontSize:11,color:'#888',marginTop:2}}>{act.time}</div></div>
+                      </div>
+                    ))}
+                  </DetailSection>}
+                  {f.notes&&<DetailSection title="Follow-up note"><p style={{fontSize:12,color:'#555',lineHeight:1.5}}>"{f.notes}"</p></DetailSection>}
+                </>
+              );
+            }
+            const fuContact=linkedDeal?.contact||f.contact;
+            const fuEmail=linkedDeal?.email||f.email;
+            const fuPhone=linkedDeal?.phone||f.phone;
             return(
               <>
                 <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>{f.account}</div>
-                <div style={{textAlign:'center',marginBottom:14}}>
-                  <span style={{background:f.done?'#EEF2FF':overdue?'#FCEBEB':'#FAEEDA',color:f.done?'#3730A3':overdue?'#A32D2D':'#633806',padding:'2px 10px',borderRadius:20,fontSize:11,fontWeight:500}}>
-                    {f.done?'✓ Done':overdue?'⚠ Overdue':'🕐 Scheduled'} · {fmtDate(f.dueDate)}
-                  </span>
-                </div>
+                {fuStatusBadge}
                 <DetailSection title="Contact info">
                   {fuContact&&<DetailRow k="Contact" v={fuContact}/>}
                   {fuEmail&&<DetailRow k="Email" v={<a href={`mailto:${fuEmail}`} style={{color:'#0C447C',textDecoration:'none'}}>{fuEmail}</a>}/>}
                   {fuPhone&&<DetailRow k="Phone" v={formatPhone(fuPhone)}/>}
                   {!fuContact&&!fuEmail&&!fuPhone&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info on file</div>}
                 </DetailSection>
-                {(linkedAcct||linkedDeal)&&<DetailSection title="Linked record">
-                  {linkedAcct&&<DetailRow k="Account" v={linkedAcct.name}/>}
-                  {linkedDeal&&<DetailRow k="Prospect" v={linkedDeal.account}/>}
-                </DetailSection>}
+                {linkedDeal&&<DetailSection title="Linked record"><DetailRow k="Prospect" v={linkedDeal.account}/></DetailSection>}
                 {f.notes&&<DetailSection title="Notes"><p style={{fontSize:12,color:'#555',lineHeight:1.5}}>"{f.notes}"</p></DetailSection>}
               </>
             );
