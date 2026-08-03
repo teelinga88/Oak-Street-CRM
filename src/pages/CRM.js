@@ -577,9 +577,9 @@ export default function CRM(){
 
       {/* Sidebar */}
       <div style={{width:240,borderRight:'0.5px solid #E5E4DF',background:'#F7F6F3',display:'flex',flexDirection:'column',flexShrink:0}}>
-        <div style={{height:88,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
+        <div style={{height:96,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
           <div style={{display:'flex',alignItems:'center',gap:18}}>
-            <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:72,height:72,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
+            <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:84,height:84,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
             <div><div style={{fontWeight:600,fontSize:13}}>Oak Street Logistics</div><div style={{fontSize:11,color:'#888'}}>Sales CRM</div></div>
           </div>
         </div>
@@ -615,7 +615,7 @@ export default function CRM(){
         {/* ACCOUNTS */}
         {view==='accounts'&&(
           <>
-            <div style={{height:84,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:96,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <div style={{display:'flex',alignItems:'center',gap:12}}><h2 style={{fontSize:15,fontWeight:600,margin:0,minWidth:220}}>{viewAsRep===repName?'My Accounts':`${viewAsRep.split(' ')[0]}'s Accounts`}</h2><HeaderTruck/></div>
               <div style={{display:'flex',gap:8}}>
                 <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
@@ -709,7 +709,7 @@ export default function CRM(){
         {/* PIPELINE */}
         {view==='pipeline'&&(
           <>
-            <div style={{height:84,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:96,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <div style={{display:'flex',alignItems:'center',gap:12}}><h2 style={{fontSize:15,fontWeight:600,margin:0,minWidth:220}}>{viewAsRep===repName?'My Pipeline':`${viewAsRep.split(' ')[0]}'s Pipeline`}</h2><HeaderTruck/></div>
               <div style={{display:'flex',gap:8}}>
                 <select value={srcFilter} onChange={e=>setSrcFilter(e.target.value)} style={{...S.input,width:'auto',padding:'5px 10px'}}>
@@ -768,7 +768,7 @@ export default function CRM(){
         {/* BUCKET */}
         {view==='bucket'&&(
           <>
-            <div style={{height:84,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:96,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <div style={{display:'flex',alignItems:'center',gap:12}}><h2 style={{fontSize:15,fontWeight:600,margin:0,minWidth:220}}>{viewAsRep.split(' ')[0]}'s Cold Call Bucket</h2><HeaderTruck/></div>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <span style={{fontSize:12,color:'#888'}}>{myLeads.length} / {BUCKET_CAP}</span>
@@ -856,7 +856,7 @@ export default function CRM(){
         {/* FOLLOWUPS */}
         {view==='followups'&&(
           <>
-            <div style={{height:84,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:96,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <div style={{display:'flex',alignItems:'center',gap:12}}><h2 style={{fontSize:15,fontWeight:600,margin:0,minWidth:220}}>{viewAsRep===repName?'My Follow-ups':`${viewAsRep.split(' ')[0]}'s Follow-ups`}</h2><HeaderTruck/></div>
               <button style={S.btnPrimary} onClick={()=>openFollowupModal()}>+ Schedule follow-up</button>
             </div>
@@ -908,7 +908,7 @@ export default function CRM(){
         {/* MANAGER */}
         {view==='manager'&&isManager&&(
           <>
-            <div style={{height:84,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:96,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
               <div style={{display:'flex',alignItems:'center',gap:12}}><h2 style={{fontSize:15,fontWeight:600,margin:0,minWidth:220}}>Manager Dashboard</h2><HeaderTruck/></div>
             </div>
             <div style={{flex:1,overflowY:'auto',padding:16}}>
@@ -999,7 +999,7 @@ export default function CRM(){
 
       {/* DETAIL PANEL */}
       <div style={{width:420,maxWidth:'38vw',borderLeft:'0.5px solid #E5E4DF',display:'flex',flexDirection:'column',flexShrink:0,overflow:'hidden'}}>
-        <div style={{height:84,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+        <div style={{height:96,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
           <h3 style={{fontSize:14,fontWeight:600,margin:0}}>{view==='accounts'?'Account detail':view==='pipeline'?'Prospect detail':view==='followups'?'Follow-up detail':'Detail'}</h3>
         </div>
         {((selId&&view==='accounts')||(selId&&view==='pipeline')||(selId&&view==='bucket'&&selectedLead)||(selId&&view==='followups'&&selectedFollowup))&&(
