@@ -50,7 +50,7 @@ const S={
   card:{background:'#F7F6F3',borderRadius:10,padding:'12px 14px'},
 };
 
-function HeaderTruck(){return <svg width="102" height="50" viewBox="0 0 650 320" role="img" aria-label="Flatbed truck" style={{flexShrink:0}}><ellipse cx="330" cy="284" rx="290" ry="9" fill="rgba(0,0,0,0.18)"/><circle cx="125" cy="250" r="30" fill="#111418"/><circle cx="125" cy="250" r="16" fill="#D7DBDE"/><circle cx="125" cy="250" r="6" fill="#2A2E33"/><circle cx="225" cy="250" r="30" fill="#111418"/><circle cx="225" cy="250" r="16" fill="#D7DBDE"/><circle cx="225" cy="250" r="6" fill="#2A2E33"/><circle cx="268" cy="250" r="30" fill="#111418"/><circle cx="268" cy="250" r="16" fill="#D7DBDE"/><circle cx="268" cy="250" r="6" fill="#2A2E33"/><circle cx="460" cy="250" r="30" fill="#111418"/><circle cx="460" cy="250" r="16" fill="#D7DBDE"/><circle cx="460" cy="250" r="6" fill="#2A2E33"/><circle cx="505" cy="250" r="30" fill="#111418"/><circle cx="505" cy="250" r="16" fill="#D7DBDE"/><circle cx="505" cy="250" r="6" fill="#2A2E33"/><rect x="130" y="212" width="430" height="8" fill="#2A2E33"/><rect x="58" y="206" width="28" height="12" rx="2" fill="#D7DBDE"/><rect x="66" y="148" width="16" height="60" rx="2" fill="#D7DBDE"/><line x1="68" y1="158" x2="80" y2="158" stroke="#9AA0A5" strokeWidth="2"/><line x1="68" y1="168" x2="80" y2="168" stroke="#9AA0A5" strokeWidth="2"/><line x1="68" y1="178" x2="80" y2="178" stroke="#9AA0A5" strokeWidth="2"/><line x1="68" y1="188" x2="80" y2="188" stroke="#9AA0A5" strokeWidth="2"/><rect x="68" y="152" width="10" height="8" rx="1" fill="#F2D98A"/><rect x="82" y="148" width="95" height="64" rx="4" fill="#111418"/><rect x="82" y="178" width="95" height="4" fill="#D7DBDE"/><rect x="177" y="108" width="95" height="104" rx="6" fill="#111418"/><rect x="190" y="120" width="68" height="42" rx="6" fill="#0B0D10" stroke="#D7DBDE" strokeWidth="2"/><rect x="182" y="116" width="6" height="18" rx="2" fill="#2A2E33"/><circle cx="200" cy="112" r="4" fill="#B3272C"/><rect x="252" y="38" width="11" height="112" rx="3" fill="#D7DBDE"/><rect x="249" y="32" width="17" height="9" rx="2" fill="#2A2E33"/><rect x="268" y="38" width="11" height="112" rx="3" fill="#D7DBDE"/><rect x="265" y="32" width="17" height="9" rx="2" fill="#2A2E33"/><polygon points="272,212 300,212 296,200 276,200" fill="#2A2E33"/><rect x="296" y="198" width="264" height="14" rx="2" fill="#8A929B"/><rect x="308" y="136" width="112" height="62" rx="2" fill="#5B6470" stroke="#333A42" strokeWidth="2.5"/><line x1="340" y1="136" x2="340" y2="198" stroke="#333A42" strokeWidth="1.5"/><line x1="380" y1="136" x2="380" y2="198" stroke="#333A42" strokeWidth="1.5"/><rect x="432" y="136" width="112" height="62" rx="2" fill="#5B6470" stroke="#333A42" strokeWidth="2.5"/><line x1="464" y1="136" x2="464" y2="198" stroke="#333A42" strokeWidth="1.5"/><line x1="504" y1="136" x2="504" y2="198" stroke="#333A42" strokeWidth="1.5"/><line x1="364" y1="130" x2="364" y2="198" stroke="#2A2E33" strokeWidth="5"/><line x1="484" y1="130" x2="484" y2="198" stroke="#2A2E33" strokeWidth="5"/><rect x="357" y="196" width="14" height="9" rx="1" fill="#9AA0A5"/><rect x="477" y="196" width="14" height="9" rx="1" fill="#9AA0A5"/><line x1="575" y1="228" x2="602" y2="222" stroke="#9AA0A5" strokeWidth="3" opacity="0.5"/><line x1="575" y1="244" x2="606" y2="240" stroke="#9AA0A5" strokeWidth="3" opacity="0.4"/></svg>;}
+function HeaderTruck(){return <svg width="102" height="50" viewBox="0 0 650 320" role="img" aria-label="Flatbed truck" style={{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none'}}><ellipse cx="330" cy="284" rx="290" ry="9" fill="rgba(0,0,0,0.18)"/><circle cx="125" cy="250" r="30" fill="#111418"/><circle cx="125" cy="250" r="16" fill="#D7DBDE"/><circle cx="125" cy="250" r="6" fill="#2A2E33"/><circle cx="225" cy="250" r="30" fill="#111418"/><circle cx="225" cy="250" r="16" fill="#D7DBDE"/><circle cx="225" cy="250" r="6" fill="#2A2E33"/><circle cx="268" cy="250" r="30" fill="#111418"/><circle cx="268" cy="250" r="16" fill="#D7DBDE"/><circle cx="268" cy="250" r="6" fill="#2A2E33"/><circle cx="460" cy="250" r="30" fill="#111418"/><circle cx="460" cy="250" r="16" fill="#D7DBDE"/><circle cx="460" cy="250" r="6" fill="#2A2E33"/><circle cx="505" cy="250" r="30" fill="#111418"/><circle cx="505" cy="250" r="16" fill="#D7DBDE"/><circle cx="505" cy="250" r="6" fill="#2A2E33"/><rect x="130" y="212" width="430" height="8" fill="#2A2E33"/><rect x="58" y="206" width="28" height="12" rx="2" fill="#D7DBDE"/><rect x="66" y="148" width="16" height="60" rx="2" fill="#D7DBDE"/><line x1="68" y1="158" x2="80" y2="158" stroke="#9AA0A5" strokeWidth="2"/><line x1="68" y1="168" x2="80" y2="168" stroke="#9AA0A5" strokeWidth="2"/><line x1="68" y1="178" x2="80" y2="178" stroke="#9AA0A5" strokeWidth="2"/><line x1="68" y1="188" x2="80" y2="188" stroke="#9AA0A5" strokeWidth="2"/><rect x="68" y="152" width="10" height="8" rx="1" fill="#F2D98A"/><rect x="82" y="148" width="95" height="64" rx="4" fill="#111418"/><rect x="82" y="178" width="95" height="4" fill="#D7DBDE"/><rect x="177" y="108" width="95" height="104" rx="6" fill="#111418"/><rect x="190" y="120" width="68" height="42" rx="6" fill="#0B0D10" stroke="#D7DBDE" strokeWidth="2"/><rect x="182" y="116" width="6" height="18" rx="2" fill="#2A2E33"/><circle cx="200" cy="112" r="4" fill="#B3272C"/><rect x="252" y="38" width="11" height="112" rx="3" fill="#D7DBDE"/><rect x="249" y="32" width="17" height="9" rx="2" fill="#2A2E33"/><rect x="268" y="38" width="11" height="112" rx="3" fill="#D7DBDE"/><rect x="265" y="32" width="17" height="9" rx="2" fill="#2A2E33"/><polygon points="272,212 300,212 296,200 276,200" fill="#2A2E33"/><rect x="296" y="198" width="264" height="14" rx="2" fill="#8A929B"/><rect x="308" y="136" width="112" height="62" rx="2" fill="#5B6470" stroke="#333A42" strokeWidth="2.5"/><line x1="340" y1="136" x2="340" y2="198" stroke="#333A42" strokeWidth="1.5"/><line x1="380" y1="136" x2="380" y2="198" stroke="#333A42" strokeWidth="1.5"/><rect x="432" y="136" width="112" height="62" rx="2" fill="#5B6470" stroke="#333A42" strokeWidth="2.5"/><line x1="464" y1="136" x2="464" y2="198" stroke="#333A42" strokeWidth="1.5"/><line x1="504" y1="136" x2="504" y2="198" stroke="#333A42" strokeWidth="1.5"/><line x1="364" y1="130" x2="364" y2="198" stroke="#2A2E33" strokeWidth="5"/><line x1="484" y1="130" x2="484" y2="198" stroke="#2A2E33" strokeWidth="5"/><rect x="357" y="196" width="14" height="9" rx="1" fill="#9AA0A5"/><rect x="477" y="196" width="14" height="9" rx="1" fill="#9AA0A5"/><line x1="575" y1="228" x2="602" y2="222" stroke="#9AA0A5" strokeWidth="3" opacity="0.5"/><line x1="575" y1="244" x2="606" y2="240" stroke="#9AA0A5" strokeWidth="3" opacity="0.4"/></svg>;}
 
 function Modal({title,sub,onClose,onSave,saveLabel='Save',showDelete=false,onDelete,children}){
   return(
@@ -614,7 +614,7 @@ export default function CRM(){
         {/* ACCOUNTS */}
         {view==='accounts'&&(
           <>
-            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,position:'relative'}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{viewAsRep===repName?'My Accounts':`${viewAsRep.split(' ')[0]}'s Accounts`}</h2>
               <HeaderTruck/>
               <div style={{display:'flex',gap:8}}>
@@ -709,7 +709,7 @@ export default function CRM(){
         {/* PIPELINE */}
         {view==='pipeline'&&(
           <>
-            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,position:'relative'}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{viewAsRep===repName?'My Pipeline':`${viewAsRep.split(' ')[0]}'s Pipeline`}</h2>
               <HeaderTruck/>
               <div style={{display:'flex',gap:8}}>
@@ -769,7 +769,7 @@ export default function CRM(){
         {/* BUCKET */}
         {view==='bucket'&&(
           <>
-            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,position:'relative'}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{viewAsRep.split(' ')[0]}'s Cold Call Bucket</h2>
               <HeaderTruck/>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
@@ -858,7 +858,7 @@ export default function CRM(){
         {/* FOLLOWUPS */}
         {view==='followups'&&(
           <>
-            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,position:'relative'}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>{viewAsRep===repName?'My Follow-ups':`${viewAsRep.split(' ')[0]}'s Follow-ups`}</h2>
               <HeaderTruck/>
               <button style={S.btnPrimary} onClick={()=>openFollowupModal()}>+ Schedule follow-up</button>
@@ -911,7 +911,7 @@ export default function CRM(){
         {/* MANAGER */}
         {view==='manager'&&isManager&&(
           <>
-            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+            <div style={{height:72,boxSizing:'border-box',padding:'0 16px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0,position:'relative'}}>
               <h2 style={{fontSize:15,fontWeight:600,margin:0}}>Manager Dashboard</h2>
               <HeaderTruck/>
             </div>
