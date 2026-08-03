@@ -1255,7 +1255,15 @@ export default function CRM(){
                   {!fuContact&&!fuEmail&&!fuPhone&&<div style={{fontSize:12,color:'#aaa',padding:'6px 0'}}>No contact info on file</div>}
                 </DetailSection>
                 {linkedDeal&&<DetailSection title="Linked record"><DetailRow k="Prospect" v={linkedDeal.account}/></DetailSection>}
-                {f.notes&&<DetailSection title="Notes"><p style={{fontSize:12,color:'#555',lineHeight:1.5}}>"{f.notes}"</p></DetailSection>}
+                {linkedDeal?.activities?.length>0&&<DetailSection title="Notes & activity">
+                  {linkedDeal.activities.map((act,i)=>(
+                    <div key={i} style={{display:'flex',gap:8,marginBottom:10}}>
+                      <div style={{width:7,height:7,borderRadius:'50%',background:'#D5D4CF',flexShrink:0,marginTop:4}}/>
+                      <div><div style={{fontSize:12,color:'#555',lineHeight:1.5}}>{act.text}</div><div style={{fontSize:11,color:'#888',marginTop:2}}>{act.time}</div></div>
+                    </div>
+                  ))}
+                </DetailSection>}
+                {f.notes&&<DetailSection title="Follow-up note"><p style={{fontSize:12,color:'#555',lineHeight:1.5}}>"{f.notes}"</p></DetailSection>}
               </>
             );
           })()}
