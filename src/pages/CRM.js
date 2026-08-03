@@ -577,9 +577,9 @@ export default function CRM(){
 
       {/* Sidebar */}
       <div style={{width:240,borderRight:'0.5px solid #E5E4DF',background:'#F7F6F3',display:'flex',flexDirection:'column',flexShrink:0}}>
-        <div style={{height:72,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
+        <div style={{height:88,boxSizing:'border-box',padding:'0 14px',borderBottom:'0.5px solid #E5E4DF',display:'flex',alignItems:'center'}}>
           <div style={{display:'flex',alignItems:'center',gap:18}}>
-            <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:56,height:56,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
+            <img src="/oak-street-logo.png" alt="Oak Street Logistics" style={{width:72,height:72,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
             <div><div style={{fontWeight:600,fontSize:13}}>Oak Street Logistics</div><div style={{fontSize:11,color:'#888'}}>Sales CRM</div></div>
           </div>
         </div>
