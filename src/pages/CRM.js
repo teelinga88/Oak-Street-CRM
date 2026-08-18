@@ -1008,31 +1008,6 @@ export default function CRM(){
                   })()}
                 </div>
               </div>
-              <div>
-                <div style={{fontWeight:500,marginBottom:10}}>Dormant accounts</div>
-                {(()=>{
-                  const dormantAccts=accounts.filter(a=>a.status==='Dormant').sort((a,b)=>(b.dormantAt||'').localeCompare(a.dormantAt||''));
-                  if(dormantAccts.length===0)return<div style={{fontSize:12,color:'#aaa',padding:'10px 0'}}>No dormant accounts — deleted accounts land here instead of being erased.</div>;
-                  return(
-                    <div style={{border:'0.5px solid #E5E4DF',borderRadius:10,overflow:'hidden'}}>
-                      {dormantAccts.map((a,i)=>{
-                        const rep=Object.values(TEAM_ROSTER).find(r=>r.name===a.rep);
-                        return(
-                          <div key={a.id} style={{display:'grid',gridTemplateColumns:'1fr 140px 110px 100px',gap:8,alignItems:'center',padding:'10px 12px',borderBottom:i<dormantAccts.length-1?'0.5px solid #E5E4DF':'none'}}>
-                            <div style={{fontSize:12,fontWeight:500}}>{a.name}</div>
-                            <div style={{display:'flex',alignItems:'center',gap:6}}>
-                              <div style={{width:18,height:18,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:600,background:rep?.color[0]||'#eee',color:rep?.color[1]||'#666'}}>{rep?.initials||'?'}</div>
-                              <span style={{fontSize:11,color:'#888'}}>{a.rep?.split(' ')[0]||'—'}</span>
-                            </div>
-                            <div style={{fontSize:11,color:'#aaa'}}>{a.dormantAt?`Since ${fmtDate(a.dormantAt)}`:''}</div>
-                            <button style={{...S.btn,padding:'4px 8px',fontSize:11,justifySelf:'end'}} onClick={()=>reactivateAccount(a.id,a.name)}>↩ Reactivate</button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-              </div>
             </div>
           </>
         )}
