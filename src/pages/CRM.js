@@ -273,7 +273,7 @@ export default function CRM(){
     return()=>clearTimeout(t);
   },[celebration?.id]);
 
-  const myAccounts=useMemo(()=>accounts.filter(a=>a.rep===viewAsRep),[accounts,viewAsRep]);
+  const myAccounts=useMemo(()=>accounts.filter(a=>a.rep===viewAsRep&&a.status!=='Dormant'),[accounts,viewAsRep]);
   const myDeals=useMemo(()=>deals.filter(d=>d.rep===viewAsRep),[deals,viewAsRep]);
   const myFollowups=useMemo(()=>followups.filter(f=>f.rep===viewAsRep),[followups,viewAsRep]);
   // `leads` is every rep's bucket when the caller is a manager (see useBucket
@@ -326,12 +326,12 @@ export default function CRM(){
   const selectedFollowup=useMemo(()=>followups.find(f=>f.id===selId),[followups,selId]);
   const shipmentsPerRep=useMemo(()=>{
     const map={};
-    Object.values(TEAM_ROSTER).forEach(r=>{map[r.name]=accounts.filter(a=>a.rep===r.name).reduce((s,a)=>s+(a.shipmentsThisMonth||0),0);});
+    Object.values(TEAM_ROSTER).forEach(r=>{map[r.name]=accounts.filter(a=>a.rep===r.name&&a.status!=='Dormant').reduce((s,a)=>s+(a.shipmentsThisMonth||0),0);});
     return map;
   },[accounts]);
   const marginPerRep=useMemo(()=>{
     const map={};
-    Object.values(TEAM_ROSTER).forEach(r=>{map[r.name]=accounts.filter(a=>a.rep===r.name).reduce((s,a)=>s+(a.marginThisMonth||0),0);});
+    Object.values(TEAM_ROSTER).forEach(r=>{map[r.name]=accounts.filter(a=>a.rep===r.name&&a.status!=='Dormant').reduce((s,a)=>s+(a.marginThisMonth||0),0);});
     return map;
   },[accounts]);
   const myShipmentsThisMonth=useMemo(()=>myAccounts.reduce((s,a)=>s+(a.shipmentsThisMonth||0),0),[myAccounts]);
@@ -351,8 +351,12 @@ export default function CRM(){
     setModal(null);showToast('Account saved!');
   }
   async function handleDeleteAccount(){
-    if(!window.confirm('Delete this account?'))return;
-    await deleteAccount(modal.id);setModal(null);setSelId(null);showToast('Account deleted');
+    if(!window.confirm('Delete this account? It will move to Dormant (visible only to managers) instead of being erased — if a new shipment comes in for them later, it reactivates automatically.'))return;
+    await updateAccount(modal.id,{status:'Dormant',dormantAt:today()});setModal(null);setSelId(null);showToast('Account moved to Dormant');
+  }
+  async function reactivateAccount(id,name){
+    if(!window.confirm(`Reactivate ${name}? It'll move back to its rep's My Accounts.`))return;
+    await updateAccount(id,{status:'Active',dormantAt:null});showToast('Account reactivated');
   }
 
   const[df,setDf]=useState({});
@@ -936,7 +940,7 @@ export default function CRM(){
                   {Object.entries(TEAM_ROSTER).map(([email,rep])=>{
                     const margin=marginPerRep[rep.name]||0;
                     return(
-                      <div key={email} style={{...S.card,background:'#EAF3DE',border:'0.5px solid #C3DDA0'}}>
+                      <div key={email} style={{...S.card,background:'#EAF3DE', border:'0.5px solid #C3DDA0'}}>
                         <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
                           <div style={{width:20,height:20,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:600,background:rep.color[0],color:rep.color[1],flexShrink:0}}>{rep.initials}</div>
                           <div style={{fontSize:11,color:'#3B6D11',fontWeight:500}}>{rep.name.split(' ')[0]}</div>
@@ -952,7 +956,7 @@ export default function CRM(){
                 <div style={{fontWeight:500,marginBottom:10}}>Rep performance</div>
                 <div style={{border:'0.5px solid #E5E4DF',borderRadius:10,overflow:'hidden'}}>
                   {Object.entries(TEAM_ROSTER).map(([email,rep],i)=>{
-                    const repAccts=accounts.filter(a=>a.rep===rep.name);
+                    const repAccts=accounts.filter(a=>a.rep===rep.name&&a.status!=='Dormant');
                     const repDeals=deals.filter(d=>d.rep===rep.name);
                     const repFu=followups.filter(f=>f.rep===rep.name&&!f.done);
                     const isSelected=mgrSel?.type==='rep'&&mgrSel?.value===email;
@@ -991,6 +995,31 @@ export default function CRM(){
                     );
                   })}
                 </div>
+              </div>
+              <div>
+                <div style={{fontWeight:500,marginBottom:10}}>Dormant accounts</div>
+                {(()=>{
+                  const dormantAccts=accounts.filter(a=>a.status==='Dormant').sort((a,b)=>(b.dormantAt||'').localeCompare(a.dormantAt||''));
+                  if(dormantAccts.length===0)return<div style={{fontSize:12,color:'#aaa',padding:'10px 0'}}>No dormant accounts — deleted accounts land here instead of being erased.</div>;
+                  return(
+                    <div style={{border:'0.5px solid #E5E4DF',borderRadius:10,overflow:'hidden'}}>
+                      {dormantAccts.map((a,i)=>{
+                        const rep=Object.values(TEAM_ROSTER).find(r=>r.name===a.rep);
+                        return(
+                          <div key={a.id} style={{display:'grid',gridTemplateColumns:'1fr 140px 110px 100px',gap:8,alignItems:'center',padding:'10px 12px',borderBottom:i<dormantAccts.length-1?'0.5px solid #E5E4DF':'none'}}>
+                            <div style={{fontSize:12,fontWeight:500}}>{a.name}</div>
+                            <div style={{display:'flex',alignItems:'center',gap:6}}>
+                              <div style={{width:18,height:18,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:600,background:rep?.color[0]||'#eee',color:rep?.color[1]||'#666'}}>{rep?.initials||'?'}</div>
+                              <span style={{fontSize:11,color:'#888'}}>{a.rep?.split(' ')[0]||'—'}</span>
+                            </div>
+                            <div style={{fontSize:11,color:'#aaa'}}>{a.dormantAt?`Since ${fmtDate(a.dormantAt)}`:''}</div>
+                            <button style={{...S.btn,padding:'4px 8px',fontSize:11,justifySelf:'end'}} onClick={()=>reactivateAccount(a.id,a.name)}>↩ Reactivate</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </>
@@ -1053,7 +1082,7 @@ export default function CRM(){
                 </div>
                 <div style={{background:atRisk?'#FCEBEB':'#E6F1FB',border:`0.5px solid ${atRisk?'#F09595':'#A8C8F0'}`,borderRadius:8,padding:'10px 12px',marginBottom:14}}>
                   <div style={{fontSize:10,fontWeight:500,color:atRisk?'#A32D2D':'#0C447C',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:6}}>{atRisk?'⚠ At Risk':'📦 Shipments'}</div>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div style={{display:'flex',jstifyContent:'space-between',alignItems:'center'}}>
                     <div>
                       <div style={{fontSize:20,fontWeight:700,color:atRisk?'#A32D2D':'#0C447C'}}>{shipCount}</div>
                       <div style={{fontSize:10,color:atRisk?'#A32D2D':'#0C447C',opacity:.8}}>this month</div>
@@ -1273,7 +1302,7 @@ export default function CRM(){
             if(mgrSel.type==='rep'){
               const rep=TEAM_ROSTER[mgrSel.value];if(!rep)return null;
               const repDeals=deals.filter(d=>d.rep===rep.name);
-              const repAccts=accounts.filter(a=>a.rep===rep.name);
+              const repAccts=accounts.filter(a=>a.rep===rep.name&&a.status!=='Dormant');
               const repFu=followups.filter(f=>f.rep===rep.name&&!f.done);
               return(
                 <>
