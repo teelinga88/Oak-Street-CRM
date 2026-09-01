@@ -287,3 +287,38 @@ export async function getZoomInfoIndustries() {
   _zoomInfoIndustriesCache = values.map(v => ({ id: v.id, name: v.attributes?.name || '' })).filter(v => v.name);
   return _zoomInfoIndustriesCache;
 }
+
+// ── Notifications (in-app, per-rep) ─────────────────────────────────────
+// Lightweight per-rep inbox. Currently used to tell a rep when a manager
+// reassigns an active account to them (see reassignRecord in CRM.js) — NOT
+// used for Prospect/deal or Cold Call Bucket lead reassignments, just
+// accounts. Each doc: { rep, message, read, createdAt }. Read in real time
+// via onSnapshot, same pattern as everything else in this file.
+export function useNotifications(repName) {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!repName) { setNotifications([]); setLoading(false); return; }
+    const q = query(collection(db, 'notifications'), where('rep', '==', repName), orderBy('createdAt', 'desc'), limit(50));
+    const unsub = onSnapshot(q, snap => {
+      setNotifications(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    });
+    return unsub;
+  }, [repName]);
+
+  return { notifications, loading };
+}
+
+export async function addNotification(data) {
+  return addDoc(collection(db, 'notifications'), {
+    read: false,
+    ...data,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function markNotificationRead(id) {
+  return updateDoc(doc(db, 'notifications', id), { read: true });
+}
