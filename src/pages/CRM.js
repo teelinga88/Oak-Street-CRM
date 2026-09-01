@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth, TEAM_ROSTER } from '../context/AuthContext';
-import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, disqualifyBucketLead, useCelebrations, addCelebration, useLeadCriteria, requestBucketRefill, getZoomInfoIndustries } from '../hooks/useData';
+import { useAccounts, useDeals, useFollowups, useBucket, dismissNetworkLead, disqualifyBucketLead, useCelebrations, addCelebration, useLeadCriteria, requestBucketRefill, getZoomInfoIndustries, useNotifications, addNotification, markNotificationRead } from '../hooks/useData';
 
 const ACCT_COLORS=[['#E6F1FB','#0C447C'],['#E1F5EE','#085041'],['#FAEEDA','#633806'],['#EEEDFE','#3C3489'],['#FAECE7','#712B13'],['#FBEAF0','#72243E'],['#F0FFF4','#276749'],['#FFF5F5','#C53030'],['#FFFFF0','#744210'],['#E9F0FF','#2B4ECF']];
 const acctColor = n => ACCT_COLORS[(n.charCodeAt(0)+(n.charCodeAt(1)||0))%ACCT_COLORS.length];
@@ -250,6 +250,17 @@ export default function CRM(){
     return entry?entry[0]:repEmail;
   },[viewAsRep,repEmail]);
   const{criteria:leadCriteria,saveLeadCriteria}=useLeadCriteria(viewAsEmail);
+  const{notifications}=useNotifications(viewAsRep);
+  const[notifOpen,setNotifOpen]=useState(false);
+  const unreadNotifCount=notifications.filter(n=>!n.read).length;
+  async function toggleNotifPanel(){
+    const opening=!notifOpen;
+    setNotifOpen(opening);
+    if(opening){
+      const unread=notifications.filter(n=>!n.read);
+      for(const n of unread)markNotificationRead(n.id);
+    }
+  }
 
   const[view,setView]=useState('accounts');
   const[selId,setSelId]=useState(null);
@@ -276,6 +287,7 @@ export default function CRM(){
   const myAccounts=useMemo(()=>accounts.filter(a=>a.rep===viewAsRep&&a.status!=='Dormant'),[accounts,viewAsRep]);
   const myDeals=useMemo(()=>deals.filter(d=>d.rep===viewAsRep),[deals,viewAsRep]);
   const myFollowups=useMemo(()=>followups.filter(f=>f.rep===viewAsRep),[followups,viewAsRep]);
+  const pastDueCount=useMemo(()=>myFollowups.filter(f=>!f.done&&f.dueDate<today()).length,[myFollowups]);
   // `leads` is every rep's bucket when the caller is a manager (see useBucket
   // above) — myLeads narrows it back down to whichever rep's bucket is
   // currently being viewed, same pattern as myAccounts/myDeals.
@@ -285,7 +297,13 @@ export default function CRM(){
   // rep — triggered by the 🔁 Reassign button right on that record's own
   // detail panel or card (see openReassignModal/reassignState below).
   async function reassignRecord(kind,id,newRep){
-    if(kind==='account')await updateAccount(id,{rep:newRep});
+    if(kind==='account'){
+      const acct=accounts.find(a=>a.id===id);
+      await updateAccount(id,{rep:newRep});
+      if(acct&&acct.rep!==newRep){
+        await addNotification({rep:newRep,message:`${acct.name} was reassigned to you by ${repName}.`});
+      }
+    }
     else if(kind==='deal')await updateDeal(id,{rep:newRep});
     else if(kind==='lead')await updateLead(id,{rep:newRep});
     showToast(`Reassigned to ${newRep.split(' ')[0]}`);
@@ -591,6 +609,23 @@ export default function CRM(){
           <div style={{width:28,height:28,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:600,background:repProfile?.color[0],color:repProfile?.color[1],flexShrink:0}}>{repProfile?.initials}</div>
           <div><div style={{fontSize:12,fontWeight:500}}>{repProfile?.name}</div><div style={{fontSize:10,color:'#888'}}>{isManager?'Rep & Manager':'Sales Rep'}</div></div>
         </div>
+        <div style={{padding:'8px 14px',borderBottom:'0.5px solid #E5E4DF',position:'relative'}}>
+          <button onClick={toggleNotifPanel} style={{...S.btn,width:'100%',justifyContent:'space-between',fontSize:12}}>
+            <span>🔔 Notifications</span>
+            {unreadNotifCount>0&&<span style={{background:'#A32D2D',color:'#fff',borderRadius:10,fontSize:10,fontWeight:600,padding:'1px 7px'}}>{unreadNotifCount}</span>}
+          </button>
+          {notifOpen&&(
+            <div style={{position:'absolute',top:'100%',left:14,right:14,background:'#fff',border:'0.5px solid #E5E4DF',borderRadius:8,boxShadow:'0 8px 24px rgba(0,0,0,.12)',zIndex:50,maxHeight:280,overflowY:'auto'}}>
+              {notifications.length===0&&<div style={{fontSize:12,color:'#aaa',padding:'14px 12px',textAlign:'center'}}>No notifications yet</div>}
+              {notifications.map(n=>(
+                <div key={n.id} style={{padding:'10px 12px',borderBottom:'0.5px solid #F0EFEA',fontSize:12,color:'#333'}}>
+                  {n.message}
+                  <div style={{fontSize:10,color:'#aaa',marginTop:3}}>{n.createdAt?.toDate?.()?.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})||'just now'}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         {isManager&&(
           <div style={{padding:'10px 14px',borderBottom:'0.5px solid #E5E4DF'}}>
             <label style={{fontSize:10,color:'#aaa',textTransform:'uppercase',letterSpacing:'.05em',display:'block',marginBottom:4}}>Viewing as</label>
@@ -604,6 +639,7 @@ export default function CRM(){
             <button key={item.id} onClick={()=>{setView(item.id);setSelId(null);}}
               style={{display:'flex',alignItems:'center',gap:8,padding:'9px 10px',borderRadius:8,cursor:'pointer',fontSize:13,color:view===item.id?'#1a1a1a':'#666',marginBottom:2,border:view===item.id?'0.5px solid #E5E4DF':'0.5px solid transparent',background:view===item.id?'#fff':'transparent',width:'100%',textAlign:'left',fontFamily:'inherit',fontWeight:view===item.id?500:400}}>
               <span>{item.icon}</span>{item.label}
+              {item.id==='followups'&&pastDueCount>0&&<span style={{marginLeft:'auto',background:'#A32D2D',color:'#fff',borderRadius:10,fontSize:10,fontWeight:600,padding:'1px 7px'}}>{pastDueCount}</span>}
             </button>
           ))}
           <div style={{textAlign:'center',marginTop:64}}><svg width="150" height="142" viewBox="0 0 180 170" role="img" aria-label="Wrapped pallet"><ellipse cx="90" cy="160" rx="70" ry="7" fill="rgba(0,0,0,0.15)"/><rect x="25" y="140" width="18" height="15" fill="#5A3A1F"/><rect x="81" y="140" width="18" height="15" fill="#5A3A1F"/><rect x="137" y="140" width="18" height="15" fill="#5A3A1F"/><rect x="15" y="132" width="150" height="10" rx="1" fill="#8B6239" stroke="#6B4423" strokeWidth="1"/><line x1="50" y1="132" x2="50" y2="142" stroke="#6B4423" strokeWidth="1.5"/><line x1="85" y1="132" x2="85" y2="142" stroke="#6B4423" strokeWidth="1.5"/><line x1="120" y1="132" x2="120" y2="142" stroke="#6B4423" strokeWidth="1.5"/><rect x="25" y="75" width="130" height="57" rx="2" fill="#C9A063" stroke="#8B6239" strokeWidth="2"/><line x1="90" y1="75" x2="90" y2="132" stroke="#8B6239" strokeWidth="2"/><line x1="25" y1="103" x2="155" y2="103" stroke="#8B6239" strokeWidth="1.5"/><rect x="40" y="30" width="100" height="48" rx="2" fill="#C9A063" stroke="#8B6239" strokeWidth="2"/><line x1="90" y1="30" x2="90" y2="78" stroke="#8B6239" strokeWidth="2"/><line x1="40" y1="54" x2="140" y2="54" stroke="#8B6239" strokeWidth="1.5"/><rect x="105" y="108" width="22" height="13" fill="#F5F1E8" stroke="#8B6239" strokeWidth="1"/><line x1="109" y1="110" x2="109" y2="119" stroke="#8B6239" strokeWidth="1"/><line x1="113" y1="110" x2="113" y2="119" stroke="#8B6239" strokeWidth="1.5"/><line x1="117" y1="110" x2="117" y2="119" stroke="#8B6239" strokeWidth="1"/><line x1="121" y1="110" x2="121" y2="119" stroke="#8B6239" strokeWidth="1.5"/><rect x="22" y="28" width="136" height="107" fill="rgba(255,255,255,0.16)"/><line x1="30" y1="132" x2="60" y2="26" stroke="rgba(255,255,255,0.5)" strokeWidth="3"/><line x1="55" y1="132" x2="85" y2="26" stroke="rgba(255,255,255,0.5)" strokeWidth="3"/><line x1="80" y1="132" x2="110" y2="26" stroke="rgba(255,255,255,0.5)" strokeWidth="3"/><line x1="105" y1="132" x2="135" y2="26" stroke="rgba(255,255,255,0.5)" strokeWidth="3"/><line x1="130" y1="132" x2="153" y2="45" stroke="rgba(255,255,255,0.5)" strokeWidth="3"/><line x1="40" y1="130" x2="65" y2="30" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5"/><line x1="95" y1="130" x2="120" y2="30" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5"/><polygon points="135,32 150,28 148,42 137,44" fill="rgba(255,255,255,0.35)" stroke="rgba(255,255,255,0.5)" strokeWidth="1"/></svg></div>
