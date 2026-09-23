@@ -733,7 +733,7 @@ export default function CRM(){
                             :<span style={{fontSize:11,color:'#aaa'}}>—</span>}
                           </td>
                           <td style={{padding:'10px 12px'}}>
-                            {a.marginThisMonth?<span style={{fontSize:13,fontWeight:600,color:'#3B6D11'}}>{fmtMoney(a.marginThisMonth)}</span>
+                            {a.marginThisMonth?<span style={{fontSize:13,fontWeight:600,color:a.marginThisMonth<0?'#A32D2D':'#3B6D11'}}>{fmtMoney(a.marginThisMonth)}</span>
                             :<span style={{fontSize:11,color:'#aaa'}}>—</span>}
                           </td>
                         </tr>
