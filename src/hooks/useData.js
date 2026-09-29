@@ -269,7 +269,14 @@ export function useLeadCriteria(repEmail) {
 // { added, repName, override } on success, or throws (err.message is
 // human-readable) on failure.
 export async function requestBucketRefill(payload) {
-  const callable = httpsCallable(functions, 'requestBucketRefill');
+  // A big pull (lots of industries/states, or a large manager-override
+  // count) can legitimately take several minutes on the backend — it's
+  // allowed up to 9 minutes there (see requestBucketRefill's runWith in
+  // index.js). The Firebase callable SDK's own default client-side wait is
+  // only 70 seconds, though, so without this the CRM would throw
+  // 'deadline-exceeded' and show an error even while the backend was still
+  // working and about to succeed. Match the client timeout to the backend's.
+  const callable = httpsCallable(functions, 'requestBucketRefill', { timeout: 540000 });
   const result = await callable(payload || {});
   return result.data;
 }
